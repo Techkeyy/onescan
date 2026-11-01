@@ -1,0 +1,7 @@
+[profile.default]
+src = "."
+test = "test"
+out = "out"
+cache_path = "cache"
+libs = []
+evm_version = "paris"
