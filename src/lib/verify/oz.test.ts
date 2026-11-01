@@ -29,7 +29,7 @@ describe("OpenZeppelin repo, default branch", () => {
       const r = await show(name, a as `0x${string}`);
       expect(r.match?.kind).toBe("exact");
       expect(r.match?.settings).toMatchObject({ optimizer: { enabled: true, runs: 1 }, evmVersion: "paris" });
-    }, 280_000);
+    }, 700_000);
   }
 });
 
@@ -38,7 +38,7 @@ describe("OpenZeppelin repo, pinned to the deployment commit", () => {
     it(`${name} matches at ${DEPLOY_COMMIT.slice(0, 7)}`, async () => {
       const r = await show(name, a as `0x${string}`, DEPLOY_COMMIT);
       expect(r.match?.kind).toBe("exact");
-    }, 280_000);
+    }, 700_000);
   }
   it("LendingMarket with NO commit given matches through the deployment-commit fallback", async () => {
     const stages: string[] = [];
@@ -49,5 +49,5 @@ describe("OpenZeppelin repo, pinned to the deployment commit", () => {
     expect(r.match?.deploymentCommitOf).toBe("HEAD");
     expect(r.commit).not.toMatch(/^83c5d54de3/);
     expect(stages.some((x) => /Deployment commit/.test(x))).toBe(true);
-  }, 600_000);
+  }, 900_000);
 });

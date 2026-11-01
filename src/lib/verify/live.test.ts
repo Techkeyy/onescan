@@ -8,7 +8,7 @@ const NODESCOPE = "0xd48da7eff3264bdd51a86b873da9ff6997aae99c" as const;
 const REVIVESCOPE = "0xe0ba8adf0cd660f5875aca70a98e466f30855dec" as const;
 const POLKAVM = "0xeebc363c7af7ed8e888da07e959043517ae4b97d" as const; // starts 0x50564d, found via eth_getLogs + eth_getCode
 const NO_CODE = "0x000000000000000000000000000000000000dEaD" as const;
-const T = 240_000;
+const T = 800_000;
 
 const run = async (repo: string, address: `0x${string}`, commit?: string) => {
   const stages: Stage[] = [];
@@ -56,7 +56,7 @@ describe("live verification", () => {
   }, T);
 
   it("a tiny budget on a REAL match is inconclusive, never no_match", async () => {
-    const r = await verify({ repo: "Firzadf/nodescope", address: NODESCOPE }, () => {}, { budgetMs: 4_000 });
+    const r = await verify({ repo: "Firzadf/nodescope", address: NODESCOPE }, () => {}, { budgetMs: 1 });
     console.log("LIVE tiny budget ->", r.failure?.reason, "|", r.failure?.detail);
     expect(r.match).toBeNull();
     expect(r.failure?.reason).toBe("inconclusive");

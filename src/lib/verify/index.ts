@@ -25,6 +25,8 @@ export { VerifyFailure, VerifyUnavailableError } from "./errors";
 export const DEFAULT_RPC = "https://test-evm-rpc-v3.portaldot.dev";
 /** Total time for a check (all commits tried). Override with ONESCAN_VERIFY_BUDGET_MS. */
 export const BUDGET_MS = 300_000;
+/** Share of the budget the default-branch pass may use when a fallback pass may follow. */
+const FIRST_PASS_SHARE = 0.55;
 /** One compile (one settings candidate or one file) may not eat the whole budget. Override with ONESCAN_COMPILE_TIMEOUT_MS. */
 export const COMPILE_TIMEOUT_MS = 120_000;
 const envMs = (name: string, dflt: number) => {
@@ -104,6 +106,11 @@ type Ctx = {
   perCompile: number;
   rpcUrl: string;
   dataDir?: string;
+  /** Set by the first pass: fingerprint of everything that decides the compiled output. */
+  fingerprint?: string;
+  /** Set on the second pass: when the fingerprint is identical there is nothing new to compile. */
+  skipIfSame?: string;
+  identical?: boolean;
 };
 
 /** One complete check of one commit. Returns a result; throws only for caller bugs. */
@@ -192,6 +199,16 @@ async function verifyOnce(input: VerifyInput, ctx: Ctx): Promise<VerifyResult> {
     const prefix = projectRoot ? projectRoot + "/" : "";
     const keyOf = (p: string) => (prefix && p.startsWith(prefix) ? p.slice(prefix.length) : p);
 
+    const fp = keccak256(toBytes(JSON.stringify([
+      [...text.entries()]
+        .filter(([p]) => !p.endsWith(".toml") || p.endsWith("foundry.toml")) // every text file read so far decides the build
+        .sort(([a], [b]) => (a < b ? -1 : 1)),
+    ])));
+    if (ctx.skipIfSame && ctx.skipIfSame === fp) {
+      ctx.identical = true;
+      return fail("repo", "no_match", "All Solidity sources and build settings are identical to the commit already checked, so the result would be the same.");
+    }
+    ctx.fingerprint = fp;
     const repoFiles = new Map<string, string>();
     for (const [p, t] of text) if (p.endsWith(".sol")) repoFiles.set(keyOf(p), t);
     const rootKeys = [...repoFiles.keys()].filter((k) => isCompileRoot(k) && declaresDeployable(repoFiles.get(k) as string));
@@ -438,9 +455,12 @@ export async function verify(
   for (const id of STAGES) emit(id, "pending");
   const ctx: Ctx = { emit, deadline, budget, perCompile, rpcUrl, dataDir: options.dataDir };
 
-  const first = await verifyOnce(input, ctx);
-  const f = first.failure;
+  // Without a pinned commit, keep part of the budget in reserve for the deployment-commit fallback.
   const specified = (input.commit ?? "").trim() !== "";
+  const firstBudget = specified ? budget : Math.round(budget * FIRST_PASS_SHARE);
+  const ctx1: Ctx = { ...ctx, budget: firstBudget, deadline: specified ? deadline : deadline - (budget - firstBudget) };
+  const first = await verifyOnce(input, ctx1);
+  const f = first.failure;
   // A specified commit is never second-guessed. Only genuine negatives and timeouts try the deployment commit.
   if (first.match || specified || !f || (f.reason !== "no_match" && f.reason !== "inconclusive")) return first;
 
@@ -460,7 +480,11 @@ export async function verify(
   prefix = `Deployment commit ${found.sha.slice(0, 10)}: `;
   emit("repo", "running", "Retrying at the repo's last commit before the contract was deployed");
   for (const id of STAGES) emit(id, "pending");
+  ctx.skipIfSame = ctx1.fingerprint;
   const second = await verifyOnce({ ...input, commit: found.sha }, ctx);
+  if (ctx.identical) {
+    return { ...first, failure: { reason: f.reason, detail: `${f.detail} The repo's last commit before deployment (${found.sha.slice(0, 10)}) has identical Solidity sources and settings, so it was not compiled again.` } };
+  }
   if (second.match) {
     return { ...second, match: { ...second.match, deploymentCommitOf: "HEAD" } };
   }

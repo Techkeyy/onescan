@@ -11,6 +11,7 @@ export const proofFixture = (over: Partial<Proof> = {}): Proof => ({
     settings: { version: "0.8.20", optimizer: { enabled: true, runs: 200 }, viaIR: false, evmVersion: null },
     abi: [],
     source: "contract A {}",
+    deploymentCommitOf: null,
   },
   runtimeHash: "0x" + "11".repeat(32) as `0x${string}`,
   sourceHash: "0x" + "22".repeat(32) as `0x${string}`,
