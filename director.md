@@ -7,7 +7,7 @@ Idea research: `C:\Users\HomePC\Desktop\skill\idea-research\portaldot-hacker-hou
 
 ## Authoritative status
 
-**BUILDING: core mechanism proven in a spike; product not built.**
+**BUILDING: INTEGRATION PROVEN on the production server through a private tunnel. Not public, no on-chain record, no owner UAT.**
 
 Update this line after every phase. Allowed words: BUILDING, COMPONENT PROVEN,
 INTEGRATION PROVEN, UAT READY, UAT PASS, RELEASE READY, SUBMISSION READY, FINISHED.
@@ -100,3 +100,14 @@ Reference wallet (owner's, public): `5DcritAN6VxWuzBKX7VoLqy8yotyyCA1AX1cSpH63So
 - 2026-11-01: research, feasibility spike, pivot to proof tool, scaffold.
 - 2026-11-01: public repo https://github.com/Techkeyy/onescan created. Registry: COMPONENT PROVEN on local anvil only; added a code-length check after a failing test proved a funded wallet could be recorded. Backend committed; its 16 tests reproduced by the director.
 - 2026-11-01 OPEN: through the real API the false claim (revivescope repo vs nodescope address) ended compile_failed after a 100s timeout, not no_match. Sent to the engine builder. Core Outcome blocker until fixed.
+- 2026-11-01: engine fixed: no_match only when every settings combination ran; timeouts are inconclusive; outages are unavailable; retries the repo's last commit before deployment. Live engine tests reproduced by the director (10 of 10). UI polished with unslop; labelled Stageshow hero added.
+- 2026-11-01 server results: true match 5s, false claim refused 21s, OpenZeppelin deployment-commit match 93s, peak 439 MB, neighbours unaffected.
+
+## Next actions, in order
+
+1. Owner must run the corrected Caddy command (see director.private.md). The first attempt added a stray `nonescan` line because PowerShell stripped double quotes. Then confirm the public URL and neighbours.
+2. Walk the true-match journey in the browser: proof page, badge, share link. Only the false-claim path has been walked through the UI so far.
+3. When tPOT arrives: `scripts/new-attester.mjs`, deploy ProofRegistry, test wrong-hash and non-attester reverts and EXTCODEHASH on testnet, set REGISTRY_ADDRESS and ATTESTER_PRIVATE_KEY in the server env file.
+4. Owner UAT of the Fund panel, untested with a real wallet.
+5. Add real usage: run public team contracts, publish a V3 coverage figure, share in Discord.
+6. README (credit unslop and Stageshow, disclose dependencies), security and repo audit, demo video, pitch deck, DoraHacks submission before 2026-11-06 04:00 UTC.
