@@ -43,7 +43,9 @@ export type VerifyFailureReason =
   | "repo_too_large"
   | "no_solidity" // repo has no Solidity files
   | "compile_failed"
-  | "no_match"; // compiled fine, nothing matched: a real negative verdict
+  | "no_match" // compiled fine, nothing matched: a real negative verdict
+  | "interrupted" // server restarted while the check was running
+  | "internal_error"; // the check itself threw
 
 export type VerifyResult = {
   repo: string;
