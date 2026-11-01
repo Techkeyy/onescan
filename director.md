@@ -93,8 +93,10 @@ Reference wallet (owner's, public): `5DcritAN6VxWuzBKX7VoLqy8yotyyCA1AX1cSpH63So
 ## Open blockers
 
 1. tPOT not received. Blocks registry deployment and Fund UAT.
-2. Production host undecided: long-running Node with a disk. Candidate: owner's `canned-vps` (needs owner's OK). Vercel account `techkeyy` exists but has no durable disk.
+2. Production host: owner approved a shared VPS on the condition that other services there are not disturbed. Operating details are in the gitignored `director.private.md`, which must stay out of the public repo.
 
 ## Log
 
 - 2026-11-01: research, feasibility spike, pivot to proof tool, scaffold.
+- 2026-11-01: public repo https://github.com/Techkeyy/onescan created. Registry: COMPONENT PROVEN on local anvil only; added a code-length check after a failing test proved a funded wallet could be recorded. Backend committed; its 16 tests reproduced by the director.
+- 2026-11-01 OPEN: through the real API the false claim (revivescope repo vs nodescope address) ended compile_failed after a 100s timeout, not no_match. Sent to the engine builder. Core Outcome blocker until fixed.
