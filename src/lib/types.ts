@@ -33,6 +33,8 @@ export type VerifyMatch = {
   settings: CompilerSettings;
   abi: unknown[];
   source: string; // source text of the matched file
+  /** Set when the requested ref did not match but the repo's last commit before deployment did. */
+  deploymentCommitOf: string | null; // the ref originally requested
 };
 
 export type VerifyFailureReason =
@@ -44,6 +46,8 @@ export type VerifyFailureReason =
   | "no_solidity" // repo has no Solidity files
   | "compile_failed"
   | "no_match" // compiled fine, nothing matched: a real negative verdict
+  | "inconclusive" // ran out of time before trying everything: never a negative verdict
+  | "unavailable" // RPC, GitHub, npm or the compiler download could not be reached
   | "interrupted" // server restarted while the check was running
   | "internal_error"; // the check itself threw
 
