@@ -1,0 +1,16 @@
+# OneScan API contract
+
+Types are in `src/lib/types.ts`. All routes are public and read-only except starting a check.
+
+| Route | Purpose | Returns |
+| --- | --- | --- |
+| `POST /api/check` body `{ repo, address, commit? }` | Start a check. `repo` accepts `owner/name` or a github.com URL | `201 { id }`; `400 { error }` on bad input; `429 { error }` when the queue is full |
+| `GET /api/check/[id]` | Poll a check | `Job`; when `state` is `matched`, the UI goes to `/proof/<address>` |
+| `GET /api/proof/[address]` | A proof, re-checked live | `ProofView` or `404` |
+| `GET /api/proofs` | Matched proofs, newest first | `Proof[]` without `match.source` and `match.abi` |
+| `GET /api/address/[address]` | `5…` or `0x…` | `AddressView`, or `400` |
+| `GET /badge/[address]` | README badge | SVG: "OneScan: code matches" / "exact match" / "not checked" / "code changed" |
+
+Pages: `/` check form, `/check/[id]` live stages, `/proof/[address]`, `/proofs`, `/address/[address]` with the Fund panel.
+
+Identical input while a check is queued or running returns the existing job id. A stored proof for the same address is replaced only by a newer match. A failed check never overwrites a proof.
