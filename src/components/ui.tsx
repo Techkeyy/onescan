@@ -146,11 +146,21 @@ export function ErrorBlock({
             Try again
           </button>
         )}
-        <Link href="/" className={btnSecondary}>
+        <Link href="/check" className={btnSecondary}>
           Start a new check
         </Link>
       </div>
     </div>
+  );
+}
+
+export function Seal({ size = 26, className }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 26 26" fill="none" aria-hidden="true" className={className}>
+      <circle cx="13" cy="13" r="11.5" stroke="currentColor" strokeWidth="2" />
+      <circle cx="13" cy="13" r="8" stroke="currentColor" strokeWidth="1" />
+      <path d="M8.8 13.3l3 3 5.4-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 
@@ -175,10 +185,13 @@ export function Stamp({
   children?: ReactNode;
 }) {
   return (
-    <div className={`stamp bg-surface ${stampCls[tone]}`}>
-      <p className="text-sm font-medium">{kicker}</p>
-      <h1 className="mt-1 font-serif text-4xl font-semibold leading-tight sm:text-5xl sm:tracking-tight">{title}</h1>
-      {children && <div className="mt-3 max-w-2xl text-base text-ink">{children}</div>}
+    <div className={`stamp flex items-start justify-between gap-6 bg-surface ${stampCls[tone]}`}>
+      <div className="min-w-0">
+        <p className="text-sm font-medium">{kicker}</p>
+        <h1 className="mt-1 font-serif text-4xl font-semibold leading-tight sm:text-5xl sm:tracking-tight">{title}</h1>
+        {children && <div className="mt-3 max-w-2xl text-base text-ink">{children}</div>}
+      </div>
+      {tone === "ok" && <Seal size={72} className="hidden shrink-0 sm:block" />}
     </div>
   );
 }

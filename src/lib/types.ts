@@ -140,3 +140,20 @@ export type AddressView = {
   vm: VmKind;
   proof: { repo: string; kind: MatchKind } | null;
 };
+
+/** What the site shows as live: real chain and queue state, never decoration. */
+export type Pulse = {
+  block: number | null; // null when the chain could not be read
+  queued: number;
+  proofs: number;
+  exact: number;
+  latest: { address: `0x${string}`; repo: string; contract: string; kind: MatchKind; commit: string; checkedAt: number }[];
+};
+
+/** A quick read of an address before running a check. */
+export type Preflight = {
+  vm: VmKind;
+  bytes: number;
+  compiler: string | null;
+  proof: { repo: string; kind: MatchKind } | null;
+};

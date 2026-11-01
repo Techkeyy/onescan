@@ -1,32 +1,58 @@
-import Link from "next/link";
-import { SearchBox } from "./SearchBox";
+"use client";
 
-function Seal() {
-  return (
-    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
-      <circle cx="13" cy="13" r="11.5" stroke="currentColor" strokeWidth="2" />
-      <circle cx="13" cy="13" r="8" stroke="currentColor" strokeWidth="1" />
-      <path d="M8.8 13.3l3 3 5.4-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { LiveStatus } from "./LiveStatus";
+import { SearchBox } from "./SearchBox";
+import { Seal, btnPrimary } from "./ui";
+
+const tab = (active: boolean) =>
+  `inline-flex min-h-11 items-center border-b-2 px-1 text-base transition-colors ${
+    active ? "border-accent font-medium text-ink" : "border-transparent text-muted hover:text-ink"
+  }`;
 
 export function SiteHeader() {
+  const path = usePathname();
+  const landing = path === "/";
   return (
-    <header className="border-b border-rule">
-      <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3">
-        <Link href="/" className="flex items-center gap-2 text-accent no-underline">
+    <header className={`top-0 z-20 border-b border-rule bg-paper ${landing ? "sticky" : "sm:sticky"}`}>
+      <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-6 gap-y-1 px-4 py-2">
+        <Link href="/" className="flex min-h-11 items-center gap-2 text-accent no-underline">
           <Seal />
           <span className="font-serif text-xl font-semibold text-ink">OneScan</span>
         </Link>
-        <nav className="flex items-center gap-4 text-base" aria-label="Main">
-          <Link href="/proofs" className="text-ink hover:underline">
-            Proofs
-          </Link>
-        </nav>
-        <div className="w-full sm:ml-auto sm:w-auto sm:min-w-80">
-          <SearchBox />
-        </div>
+        {landing ? (
+          <>
+            <nav className="ml-auto hidden items-center gap-6 sm:flex" aria-label="Main">
+              <a href="#how" className={tab(false)}>
+                How it works
+              </a>
+              <Link href="/proofs" className={tab(false)}>
+                Proofs
+              </Link>
+            </nav>
+            <Link href="/check" className={`${btnPrimary} ml-auto sm:ml-0`}>
+              Check a contract
+            </Link>
+          </>
+        ) : (
+          <>
+            <nav className="flex items-center gap-6" aria-label="Main">
+              <Link href="/check" className={tab(path.startsWith("/check"))}>
+                Check
+              </Link>
+              <Link href="/proofs" className={tab(path.startsWith("/proof"))}>
+                Proofs
+              </Link>
+            </nav>
+            <span className="ml-auto hidden lg:block">
+              <LiveStatus />
+            </span>
+            <div className="w-full pb-1 sm:ml-auto sm:w-72 sm:pb-0 lg:ml-0">
+              <SearchBox />
+            </div>
+          </>
+        )}
       </div>
     </header>
   );

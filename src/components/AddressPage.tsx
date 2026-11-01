@@ -36,7 +36,7 @@ export function AddressPage({ input }: { input: string }) {
             Use a 0x address (42 characters) or a 5... address. Check that nothing was cut off when you copied it.
           </p>
           <div className="mt-4">
-            <Link href="/" className={btnSecondary}>
+            <Link href="/check" className={btnSecondary}>
               Back to the check form
             </Link>
           </div>

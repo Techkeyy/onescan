@@ -7,6 +7,7 @@ import type { Job, Stage, StageId, VerifyFailureReason } from "@/lib/types";
 import { apiGet, apiPostCheck, startFailureMessage } from "./api";
 import { githubCommitUrl } from "./format";
 import { Field, Hash, Loading, Notice, Section, Stamp, btnPrimary, btnSecondary, inputCls, linkCls } from "./ui";
+import { useNow } from "./live";
 
 const STAGE_LABEL: Record<StageId, string> = {
   bytecode: "Reading the code on-chain",
@@ -75,29 +76,49 @@ export const FAILURE_COPY: Record<VerifyFailureReason, { title: string; body: st
 };
 
 function StageList({ stages }: { stages: Stage[] }) {
-  const byId = new Map(stages.map((s) => [s.id, s]));
+  const byId = new Map(stages.map((st) => [st.id, st]));
+  // Each attempt compiles then compares. While a new compile runs, the compare is waiting for it.
+  const compiling = byId.get("compile")?.state === "running";
   return (
-    <ol className="divide-y divide-rule border-y border-rule">
-      {STAGE_ORDER.map((id) => {
-        const s = byId.get(id) ?? { id, state: "pending" as const };
+    <ol>
+      {STAGE_ORDER.map((id, i) => {
+        const known = byId.get(id);
+        const s: Stage =
+          !known || (id === "compare" && compiling && known.state === "running") ? { id, state: "pending" } : known;
+        const last = i === STAGE_ORDER.length - 1;
         return (
-          <li key={id} className="flex items-start gap-3 py-3">
-            <span
-              aria-hidden="true"
-              className={`mt-2 inline-block size-2 shrink-0 rounded-full ${
-                s.state === "done"
-                  ? "bg-ok"
-                  : s.state === "failed"
-                    ? "bg-bad"
-                    : s.state === "running"
-                      ? "pulse bg-accent"
-                      : "border border-muted"
-              }`}
-            />
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap justify-between gap-x-4">
-                <span className="font-medium">{STAGE_LABEL[id]}</span>
-                <span className={`text-sm ${s.state === "failed" ? "font-semibold text-bad" : "text-muted"}`}>
+          <li key={id} className="grid grid-cols-[2rem_minmax(0,1fr)] gap-x-3">
+            <div className="flex flex-col items-center">
+              <span
+                aria-hidden="true"
+                className={`relative mt-1 flex size-7 shrink-0 items-center justify-center rounded-full border-2 text-sm font-medium ${
+                  s.state === "done"
+                    ? "border-ok bg-ok text-paper"
+                    : s.state === "failed"
+                      ? "border-bad bg-bad text-paper"
+                      : s.state === "running"
+                        ? "node-running border-rule text-accent"
+                        : "border-rule text-muted"
+                }`}
+              >
+                {s.state === "done" ? (
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M3 7.5l2.6 2.6L11 4.4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                ) : s.state === "failed" ? (
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M4 4l6 6M10 4l-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                ) : (
+                  i + 1
+                )}
+              </span>
+              {!last && <span className={`w-0.5 flex-1 ${s.state === "done" ? "bg-ok" : "bg-rule"}`} />}
+            </div>
+            <div className={`min-w-0 ${last ? "" : "pb-6"}`}>
+              <div className="flex min-h-8 flex-wrap items-center justify-between gap-x-4">
+                <span className={`font-medium ${s.state === "pending" ? "text-muted" : ""}`}>{STAGE_LABEL[id]}</span>
+                <span className={`text-sm ${s.state === "failed" ? "font-medium text-bad" : "text-muted"}`}>
                   {STATE_WORD[s.state]}
                 </span>
               </div>
@@ -107,6 +128,18 @@ function StageList({ stages }: { stages: Stage[] }) {
         );
       })}
     </ol>
+  );
+}
+
+function Elapsed({ job }: { job: Job }) {
+  const running = job.state === "queued" || job.state === "running";
+  const now = useNow(1000);
+  const seconds = Math.max(0, Math.round(((running ? now : job.updatedAt) - job.createdAt) / 1000));
+  const text = seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+  return (
+    <p className="font-mono text-sm text-muted" suppressHydrationWarning>
+      {running ? `Running for ${text}` : `Took ${text}`}
+    </p>
   );
 }
 
@@ -237,7 +270,7 @@ export function CheckView({ id }: { id: string }) {
           </p>
         </Notice>
         <div className="mt-4">
-          <Link href="/" className={btnSecondary}>
+          <Link href="/check" className={btnSecondary}>
             Start a new check
           </Link>
         </div>
@@ -264,8 +297,8 @@ export function CheckView({ id }: { id: string }) {
     <div>
       {active && (
         <>
-          <h1 className="font-serif text-3xl font-medium sm:text-4xl">
-            {job.state === "matched" ? "Match found. Opening the proof." : "Checking"}
+          <h1 className="font-serif text-4xl font-medium leading-tight">
+            {job.state === "matched" ? "Match found. Opening the proof." : "Checking the repo against the chain"}
           </h1>
           {job.state === "queued" && (
             <p className="mt-2 text-muted">Waiting in line. This page updates by itself.</p>
@@ -318,13 +351,25 @@ export function CheckView({ id }: { id: string }) {
         </div>
       )}
 
-      <Section title="What was checked">
-        <InputSummary job={job} />
-      </Section>
-
-      <Section title="Stages">
-        <StageList stages={job.stages} />
-      </Section>
+      <div className="mt-8 grid grid-cols-[minmax(0,1fr)] items-start gap-x-12 gap-y-8 lg:grid-cols-[minmax(0,1fr)_24rem]">
+        <section aria-labelledby="stages-title" className="border border-rule bg-surface p-4 sm:p-6">
+          <div className="mb-5 flex flex-wrap items-baseline justify-between gap-x-4">
+            <h2 id="stages-title" className="font-serif text-2xl font-medium">
+              {job.state === "queued" || job.state === "running" ? "What is happening" : "What happened"}
+            </h2>
+            <Elapsed job={job} />
+          </div>
+          <StageList stages={job.stages} />
+        </section>
+        <section aria-labelledby="inputs-title">
+          <h2 id="inputs-title" className="font-serif text-2xl font-medium">
+            What was checked
+          </h2>
+          <div className="mt-3 [&_dl>div]:sm:grid-cols-[6rem_1fr]">
+            <InputSummary job={job} />
+          </div>
+        </section>
+      </div>
 
       {failure?.detail && (
         <Section title={job.state === "no_match" ? "What OneScan compared" : "Details"}>
@@ -339,7 +384,7 @@ export function CheckView({ id }: { id: string }) {
           <AnotherCommit job={job} />
           <p className="mt-4">
             <Link
-              href={`/?repo=${encodeURIComponent(job.input.repo)}&address=${job.input.address}`}
+              href={`/check?repo=${encodeURIComponent(job.input.repo)}&address=${job.input.address}`}
               className={linkCls}
             >
               Check a different repo for this contract
@@ -352,7 +397,7 @@ export function CheckView({ id }: { id: string }) {
         <div className="mt-8 flex flex-wrap gap-3">
           <RetryButton job={job} />
           <Link
-            href={`/?repo=${encodeURIComponent(job.input.repo)}&address=${job.input.address}${
+            href={`/check?repo=${encodeURIComponent(job.input.repo)}&address=${job.input.address}${
               job.input.commit ? `&commit=${encodeURIComponent(job.input.commit)}` : ""
             }`}
             className={btnSecondary}

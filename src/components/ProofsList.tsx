@@ -26,7 +26,7 @@ export function ProofsList() {
         <p className="max-w-xl">
           No proofs yet. A proof appears here only after a repo is checked and really matches its contract.
         </p>
-        <Link href="/" className={`${btnPrimary} mt-4`}>
+        <Link href="/check" className={`${btnPrimary} mt-4`}>
           Check a repo
         </Link>
       </div>

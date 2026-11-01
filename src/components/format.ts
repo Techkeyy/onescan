@@ -48,3 +48,13 @@ export function githubCommitUrl(repo: string, commit: string) {
 export function githubFileUrl(repo: string, commit: string, file: string) {
   return `https://github.com/${repo}/blob/${commit}/${file.split("/").map(encodeURIComponent).join("/")}`;
 }
+
+/** Accepts owner/name or any github.com link, and keeps a commit, tag or branch if the link names one. */
+export function parseRepoInput(raw: string): { repo: string; ref: string | null } | null {
+  const m = raw
+    .trim()
+    .match(
+      /^(?:https?:\/\/)?(?:www\.)?(?:github\.com\/)?([\w.-]+)\/([\w.-]+?)(?:\.git)?(?:\/(?:tree|commit|blob)\/([^\s/?#]+)[^\s]*)?\/?(?:[?#]\S*)?$/,
+    );
+  return m ? { repo: `${m[1]}/${m[2]}`, ref: m[3] ?? null } : null;
+}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ProofView } from "@/components/ProofView";
+import { Work } from "@/components/Work";
 
 export async function generateMetadata({ params }: PageProps<"/proof/[address]">): Promise<Metadata> {
   const { address } = await params;
@@ -11,5 +12,9 @@ export async function generateMetadata({ params }: PageProps<"/proof/[address]">
 
 export default async function ProofPage({ params }: PageProps<"/proof/[address]">) {
   const { address } = await params;
-  return <ProofView address={address} />;
+  return (
+    <Work>
+      <ProofView address={address} />
+    </Work>
+  );
 }

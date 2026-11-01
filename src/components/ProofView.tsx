@@ -192,7 +192,7 @@ export function ProofView({ address }: { address: string }) {
           was tried and failed.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
-          <Link href={`/?address=${encodeURIComponent(address)}`} className={btnSecondary}>
+          <Link href={`/check?address=${encodeURIComponent(address)}`} className={btnSecondary}>
             Check a repo against this contract
           </Link>
           <Link href={`/address/${address}`} className={btnSecondary}>
@@ -247,12 +247,8 @@ export function ProofView({ address }: { address: string }) {
         </div>
       )}
 
-      {!changed && (
-        <div className="mt-6">
-          <LiveBanner live={p.live} />
-        </div>
-      )}
-
+      <div className="mt-8 grid grid-cols-[minmax(0,1fr)] items-start gap-x-12 gap-y-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="[&>section:first-child]:mt-0">
       <Section title="What was proven">
         <dl>
           <Field label="Repo">
@@ -363,10 +359,6 @@ export function ProofView({ address }: { address: string }) {
         )}
       </Section>
 
-      <Section title="On-chain record">
-        <AttestationBlock a={p.attestation} />
-      </Section>
-
       <Section title="Check it yourself">
         <p className="mb-3 max-w-2xl">You do not need OneScan to confirm this. These steps give the same answer.</p>
         <Reproduce p={p} />
@@ -385,9 +377,23 @@ export function ProofView({ address }: { address: string }) {
         </details>
       </Section>
 
-      <Section title="Share this proof">
-        <Share address={p.address} />
-      </Section>
+        </div>
+        <aside className="space-y-8 lg:sticky lg:top-24" aria-label="Status and sharing">
+          {!changed && <LiveBanner live={p.live} />}
+          <section>
+            <h2 className="font-serif text-2xl font-medium">Share this proof</h2>
+            <div className="mt-3">
+              <Share address={p.address} />
+            </div>
+          </section>
+          <section>
+            <h2 className="font-serif text-2xl font-medium">On-chain record</h2>
+            <div className="mt-3">
+              <AttestationBlock a={p.attestation} />
+            </div>
+          </section>
+        </aside>
+      </div>
     </div>
   );
 }
