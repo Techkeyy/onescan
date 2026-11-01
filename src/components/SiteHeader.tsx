@@ -14,10 +14,10 @@ function Seal() {
 export function SiteHeader() {
   return (
     <header className="border-b border-rule">
-      <div className="mx-auto flex w-full max-w-4xl flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3">
+      <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3">
         <Link href="/" className="flex items-center gap-2 text-accent no-underline">
           <Seal />
-          <span className="font-serif text-2xl font-bold tracking-tight text-ink">OneScan</span>
+          <span className="font-serif text-xl font-semibold text-ink">OneScan</span>
         </Link>
         <nav className="flex items-center gap-4 text-base" aria-label="Main">
           <Link href="/proofs" className="text-ink hover:underline">

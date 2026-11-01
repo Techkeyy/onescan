@@ -1,0 +1,137 @@
+/* Scoped to the home illustration. Colors come from the page tokens, so it follows light and dark. */
+.os-hero {
+  & .ss-stage {
+    --ss-canvas: var(--paper);
+    --ss-surface: var(--surface);
+    --ss-chrome: var(--surface);
+    --ss-text-strong: var(--ink);
+    --ss-text: var(--muted);
+    --ss-accent: var(--accent);
+    --ss-accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+    --ss-success: var(--ok);
+    --ss-font: var(--font-geist-sans), system-ui, sans-serif;
+    --ss-mono: var(--font-geist-mono), ui-monospace, monospace;
+    --os-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    background: transparent;
+    overflow: hidden;
+    border-radius: 12px;
+    font: 12px/1.4 var(--ss-font);
+    color: var(--ss-text-strong);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  & .os-window {
+    box-shadow: var(--ss-shadow-hero);
+    border-radius: 12px;
+  }
+
+  & .os-body {
+    display: grid;
+    align-content: start;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  & .os-field .ss-field__value {
+    font-family: var(--ss-mono);
+    font-size: 11px;
+  }
+
+  & .os-stages {
+    display: grid;
+    gap: 4px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  & .os-stage {
+    display: grid;
+    grid-template-columns: 14px 64px 1fr;
+    align-items: center;
+    gap: 8px;
+    height: 24px;
+    opacity: 0.45;
+    transition: opacity 0.4s var(--os-ease);
+  }
+  & .os-stage[data-on] {
+    opacity: 1;
+  }
+
+  & .os-stage__label {
+    font-weight: 500;
+  }
+
+  & .os-stage__detail {
+    font-family: var(--ss-mono);
+    font-size: 11px;
+    color: var(--ss-text);
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.5s var(--os-ease), transform 0.5s var(--os-ease);
+  }
+  & .os-stage__detail[data-in] {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* The verdict, pressed in once. It straddles the window's right edge over its empty margin. */
+  & .os-stamp {
+    position: absolute;
+    left: 300px;
+    top: 252px;
+    display: grid;
+    gap: 4px;
+    width: 204px;
+    padding: 16px 20px;
+    border: 3px solid var(--ok);
+    border-radius: 4px;
+    background: var(--surface);
+    color: var(--ok);
+    box-shadow: var(--ss-shadow-satellite);
+    opacity: 0;
+    scale: 1.06;
+    transition: opacity 0.24s var(--os-ease), scale 0.24s var(--os-ease);
+  }
+  & .os-stamp[data-compact] {
+    left: 128px;
+    top: 232px;
+    width: 216px;
+  }
+  & .os-stamp[data-in] {
+    opacity: 1;
+    scale: 1;
+  }
+  & .os-stamp::after {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border: 1px solid currentColor;
+    border-radius: 1px;
+    pointer-events: none;
+  }
+  & .os-stamp__kicker {
+    font-size: 11px;
+    font-weight: 500;
+  }
+  & .os-stamp__title {
+    font-family: var(--font-fraunces), serif;
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.1;
+  }
+  & .os-stamp__meta {
+    font-family: var(--ss-mono);
+    font-size: 11px;
+    color: var(--ss-text-strong);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .os-hero .os-stamp,
+  .os-hero .os-stage,
+  .os-hero .os-stage__detail {
+    transition: none;
+  }
+}

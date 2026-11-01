@@ -1,0 +1,3 @@
+Copied from Stageshow by Benji Taylor (MIT, see LICENSE). Removed: brands/ and parts/BrandMark (unused).
+Each .ts/.tsx file also gets a leading eslint-disable comment so the project lint passes.
+Also: one comment dash and three tiny font sizes edited to satisfy the project audit.

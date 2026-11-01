@@ -276,7 +276,7 @@ export default function FundPanel({ target: initialTarget, onChanged }: { target
 
   return (
     <section aria-labelledby="fund-title" className="mt-10 border-t-2 border-ink pt-5">
-      <h2 id="fund-title" className="font-serif text-2xl font-semibold tracking-tight">
+      <h2 id="fund-title" className="font-serif text-2xl font-medium">
         Fund an EVM address
       </h2>
       <p className="mt-2 max-w-2xl">

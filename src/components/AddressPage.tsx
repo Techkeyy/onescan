@@ -31,7 +31,7 @@ export function AddressPage({ input }: { input: string }) {
     if (result.status === 400) {
       return (
         <div className="py-4">
-          <h1 className="font-serif text-3xl font-semibold tracking-tight">That is not an address</h1>
+          <h1 className="font-serif text-3xl font-medium">That is not an address</h1>
           <p className="mt-3 max-w-2xl">
             Use a 0x address (42 characters) or a 5... address. Check that nothing was cut off when you copied it.
           </p>
@@ -56,14 +56,14 @@ export function AddressPage({ input }: { input: string }) {
 
   return (
     <div>
-      <h1 className="font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
+      <h1 className="font-serif text-3xl font-medium sm:text-4xl">
         {isContract ? "Contract account" : "Account"}
       </h1>
       <p className="mt-2 max-w-2xl text-muted">
         One account has two forms: a 5... address that the Substrate side uses and a 0x address that EVM tools use.
       </p>
 
-      <section className="mt-6 border border-ink/30 bg-surface px-4 py-2" aria-label="Account">
+      <section className="mt-6 border border-ink/30 bg-surface px-4 py-2 [&_dl>div:first-child]:border-t-0" aria-label="Account">
         <dl>
           <Field label="5... address">
             <Hash value={v.native} />

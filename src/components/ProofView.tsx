@@ -31,7 +31,7 @@ function LiveBanner({ live }: { live: ProofViewData["live"] }) {
   if (live === "changed") {
     return (
       <div role="alert" className="border-4 border-bad bg-bad-bg p-4">
-        <p className="font-serif text-2xl font-bold text-bad">Warning: the code at this address has changed</p>
+        <p className="font-serif text-2xl font-semibold text-bad">Warning: the code at this address has changed</p>
         <p className="mt-1">
           The code running there now is different from what was proven below. Do not rely on this proof for the
           contract as it is today.
@@ -186,7 +186,7 @@ export function ProofView({ address }: { address: string }) {
   if (!result.ok && result.status === 404) {
     return (
       <div className="py-4">
-        <h1 className="font-serif text-3xl font-semibold tracking-tight sm:text-4xl">No proof for this address</h1>
+        <h1 className="font-serif text-3xl font-medium sm:text-4xl">No proof for this address</h1>
         <p className="mt-3 max-w-2xl">
           Nobody has proven a repo for this contract yet. Failed checks are never stored, so this does not mean a check
           was tried and failed.
@@ -238,6 +238,15 @@ export function ProofView({ address }: { address: string }) {
         )}
       </Stamp>
 
+      {p.match.deploymentCommitOf && (
+        <div className="mt-6">
+          <Notice tone="warn" title="Matched at a different commit than the one requested">
+            The requested ref <code className="font-mono text-sm">{p.match.deploymentCommitOf}</code> did not match.
+            The repo&apos;s last commit before this contract was deployed did, and that commit is the one proven below.
+          </Notice>
+        </div>
+      )}
+
       {!changed && (
         <div className="mt-6">
           <LiveBanner live={p.live} />
@@ -281,9 +290,9 @@ export function ProofView({ address }: { address: string }) {
             <span className="font-mono text-sm">solc {p.match.settings.version}</span>
           </Field>
           <Field label="Settings">
-            Optimizer {p.match.settings.optimizer.enabled ? `on, ${p.match.settings.optimizer.runs} runs` : "off"}.{" "}
-            viaIR {p.match.settings.viaIR ? "on" : "off"}.{" "}
-            {p.match.settings.evmVersion ? `EVM version ${p.match.settings.evmVersion}.` : "Default EVM version."}
+            Optimizer {p.match.settings.optimizer.enabled ? `on, ${p.match.settings.optimizer.runs} runs` : "off"}, viaIR{" "}
+            {p.match.settings.viaIR ? "on" : "off"},{" "}
+            {p.match.settings.evmVersion ? `EVM version ${p.match.settings.evmVersion}` : "default EVM version"}
           </Field>
           <Field label="Code hash">
             <Hash value={p.runtimeHash} />
@@ -322,7 +331,7 @@ export function ProofView({ address }: { address: string }) {
               {p.activity.txCount.toLocaleString()} transactions and {p.activity.logCount.toLocaleString()} events seen.
             </p>
             {p.activity.recent.length === 0 ? (
-              <p className="mt-2 text-muted">No events yet.</p>
+              <p className="mt-2 text-muted">No events yet</p>
             ) : (
               <ul className="mt-3 divide-y divide-rule border-y border-rule">
                 {p.activity.recent.map((a, i) => (

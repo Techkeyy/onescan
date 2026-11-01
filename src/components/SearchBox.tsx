@@ -53,7 +53,7 @@ export function SearchBox() {
         <button
           type="submit"
           disabled={busy}
-          className="min-h-11 shrink-0 rounded-sm border border-ink/40 px-4 text-base font-medium hover:bg-ink/5 disabled:opacity-50"
+          className="min-h-11 shrink-0 rounded-lg border border-ink/40 px-4 text-base font-medium transition-colors hover:bg-ink/5 disabled:opacity-50"
         >
           {busy ? "Looking" : "Look up"}
         </button>

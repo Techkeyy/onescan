@@ -6,7 +6,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import type { Job, Stage, StageId, VerifyFailureReason } from "@/lib/types";
 import { apiGet, apiPostCheck, startFailureMessage } from "./api";
 import { githubCommitUrl } from "./format";
-import { Hash, Loading, Notice, Section, Stamp, btnPrimary, btnSecondary, inputCls, linkCls } from "./ui";
+import { Field, Hash, Loading, Notice, Section, Stamp, btnPrimary, btnSecondary, inputCls, linkCls } from "./ui";
 
 const STAGE_LABEL: Record<StageId, string> = {
   bytecode: "Reading the code on-chain",
@@ -52,6 +52,14 @@ export const FAILURE_COPY: Record<VerifyFailureReason, { title: string; body: st
     title: "The code did not compile",
     body: "OneScan compiled the repo with the compiler version found on-chain, and the compiler reported errors. The details below are the compiler's own words.",
   },
+  inconclusive: {
+    title: "The check ran out of time",
+    body: "OneScan did not get through every combination it needed to try, so it cannot say whether the repo matches. This is not a negative verdict. Try again, or try a specific commit.",
+  },
+  unavailable: {
+    title: "A service OneScan depends on could not be reached",
+    body: "The chain, GitHub, the package registry or the compiler download did not answer. Nothing was decided about the repo. Try again in a minute.",
+  },
   interrupted: {
     title: "The check was interrupted",
     body: "OneScan restarted while your check was running, so it never finished. Nothing was decided about the repo. Please submit the check again.",
@@ -76,7 +84,7 @@ function StageList({ stages }: { stages: Stage[] }) {
           <li key={id} className="flex items-start gap-3 py-3">
             <span
               aria-hidden="true"
-              className={`mt-1.5 inline-block size-2.5 shrink-0 rounded-full ${
+              className={`mt-2 inline-block size-2 shrink-0 rounded-full ${
                 s.state === "done"
                   ? "bg-ok"
                   : s.state === "failed"
@@ -93,7 +101,7 @@ function StageList({ stages }: { stages: Stage[] }) {
                   {STATE_WORD[s.state]}
                 </span>
               </div>
-              {s.detail && <p className="mt-0.5 break-words font-mono text-sm text-muted">{s.detail}</p>}
+              {s.detail && <p className="mt-1 break-words font-mono text-sm text-muted">{s.detail}</p>}
             </div>
           </li>
         );
@@ -156,15 +164,13 @@ function AnotherCommit({ job }: { job: Job }) {
 function InputSummary({ job }: { job: Job }) {
   const { repo, commit, address } = job.input;
   return (
-    <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-[8rem_1fr]">
-      <dt className="text-sm font-medium text-muted">Repo</dt>
-      <dd>
+    <dl>
+      <Field label="Repo">
         <a href={`https://github.com/${repo}`} className={linkCls} rel="noopener noreferrer">
           {repo}
         </a>
-      </dd>
-      <dt className="text-sm font-medium text-muted">Commit</dt>
-      <dd>
+      </Field>
+      <Field label="Commit">
         {commit ? (
           /^[0-9a-f]{40}$/i.test(commit) ? (
             <a href={githubCommitUrl(repo, commit)} className={`${linkCls} font-mono text-sm`} rel="noopener noreferrer">
@@ -176,11 +182,10 @@ function InputSummary({ job }: { job: Job }) {
         ) : (
           "Default branch"
         )}
-      </dd>
-      <dt className="text-sm font-medium text-muted">Contract</dt>
-      <dd>
+      </Field>
+      <Field label="Contract">
         <Hash value={address} />
-      </dd>
+      </Field>
     </dl>
   );
 }
@@ -259,7 +264,7 @@ export function CheckView({ id }: { id: string }) {
     <div>
       {active && (
         <>
-          <h1 className="font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h1 className="font-serif text-3xl font-medium sm:text-4xl">
             {job.state === "matched" ? "Match found. Opening the proof." : "Checking"}
           </h1>
           {job.state === "queued" && (
@@ -292,8 +297,8 @@ export function CheckView({ id }: { id: string }) {
 
       {job.state === "failed" && (
         <>
-          <p className="text-sm font-semibold uppercase tracking-widest text-bad">The check could not finish</p>
-          <h1 className="mt-1 font-serif text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
+          <p className="text-sm font-medium text-bad">The check could not finish</p>
+          <h1 className="mt-1 font-serif text-3xl font-medium leading-tight sm:text-4xl">
             {failure ? FAILURE_COPY[failure.reason].title : "The check stopped without a reason"}
           </h1>
           <p className="mt-3 max-w-2xl">

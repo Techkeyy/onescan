@@ -5,11 +5,11 @@ import { useState, useSyncExternalStore, type ReactNode } from "react";
 import { shorten } from "./format";
 
 export const btnPrimary =
-  "inline-flex min-h-11 items-center justify-center rounded-sm bg-accent px-5 text-base font-semibold text-accent-ink hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-5 text-base font-semibold text-accent-ink transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50";
 export const btnSecondary =
-  "inline-flex min-h-11 items-center justify-center rounded-sm border border-ink/40 px-4 text-base font-medium text-ink hover:bg-ink/5 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex min-h-11 items-center justify-center rounded-lg border border-ink/40 px-4 text-base font-medium text-ink transition-colors hover:bg-ink/5 disabled:cursor-not-allowed disabled:opacity-50";
 export const inputCls =
-  "min-h-11 w-full rounded-sm border border-ink/40 bg-surface px-3 text-base text-ink placeholder:text-muted";
+  "min-h-11 w-full rounded-lg border border-ink/40 bg-surface px-3 text-base text-ink placeholder:text-muted";
 export const linkCls = "text-accent underline hover:opacity-80";
 
 function subscribe() {
@@ -38,7 +38,7 @@ export function CopyButton({ value, label = "Copy" }: { value: string; label?: s
     <button
       type="button"
       onClick={copy}
-      className="inline-flex min-h-9 shrink-0 items-center rounded-sm border border-ink/30 px-2.5 text-sm font-medium text-ink hover:bg-ink/5"
+      className="inline-flex min-h-9 shrink-0 items-center rounded-md border border-ink/30 px-3 text-sm font-medium text-ink transition-colors hover:bg-ink/5"
       aria-label={`${label} ${shorten(value, 10, 6)}`}
     >
       <span aria-live="polite">{state === "copied" ? "Copied" : state === "failed" ? "Press Ctrl+C" : label}</span>
@@ -85,7 +85,7 @@ export function Field({ label, children }: { label: string; children: ReactNode 
 export function Section({ title, children, id }: { title: string; children: ReactNode; id?: string }) {
   return (
     <section id={id} className="mt-10">
-      <h2 className="font-serif text-2xl font-semibold tracking-tight">{title}</h2>
+      <h2 className="font-serif text-2xl font-medium">{title}</h2>
       <div className="mt-3">{children}</div>
     </section>
   );
@@ -120,7 +120,7 @@ export function Notice({
 export function Loading({ what }: { what: string }) {
   return (
     <p role="status" className="flex items-center gap-3 py-10 text-muted">
-      <span className="pulse inline-block size-2.5 rounded-full bg-accent" aria-hidden="true" />
+      <span className="pulse inline-block size-2 rounded-full bg-accent" aria-hidden="true" />
       {what}
     </p>
   );
@@ -176,8 +176,8 @@ export function Stamp({
 }) {
   return (
     <div className={`stamp bg-surface ${stampCls[tone]}`}>
-      <p className="text-sm font-semibold uppercase tracking-widest">{kicker}</p>
-      <h1 className="mt-1 font-serif text-4xl font-bold leading-tight tracking-tight sm:text-5xl">{title}</h1>
+      <p className="text-sm font-medium">{kicker}</p>
+      <h1 className="mt-1 font-serif text-4xl font-semibold leading-tight sm:text-5xl sm:tracking-tight">{title}</h1>
       {children && <div className="mt-3 max-w-2xl text-base text-ink">{children}</div>}
     </div>
   );
