@@ -1,26 +1,127 @@
 @import "tailwindcss";
 
+/* Notary palette: paper, ink, one blue accent. Green, amber and red stay semantic. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --paper: #f5f1e8;
+  --surface: #fbf9f3;
+  --ink: #17181d;
+  --muted: #55575f;
+  --rule: #d6cfbd;
+  --accent: #1e3a8a;
+  --accent-ink: #ffffff;
+  --ok: #1b6a3f;
+  --ok-bg: #e3efe5;
+  --warn: #7a4e00;
+  --warn-bg: #f5e9cc;
+  --bad: #a11d1d;
+  --bad-bg: #f6dcd9;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --paper: #111318;
+    --surface: #181b22;
+    --ink: #ece8dc;
+    --muted: #a4a7b0;
+    --rule: #2c303a;
+    --accent: #9db4ff;
+    --accent-ink: #0d1230;
+    --ok: #6fd49a;
+    --ok-bg: #14281d;
+    --warn: #e8bb5c;
+    --warn-bg: #2c2310;
+    --bad: #ff8a82;
+    --bad-bg: #301516;
   }
 }
 
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-rule: var(--rule);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-ok: var(--ok);
+  --color-ok-bg: var(--ok-bg);
+  --color-warn: var(--warn);
+  --color-warn-bg: var(--warn-bg);
+  --color-bad: var(--bad);
+  --color-bad-bg: var(--bad-bg);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-fraunces);
+}
+
+html {
+  background: var(--paper);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+a {
+  text-underline-offset: 3px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* The verdict stamp: a double rule ring, set slightly off true like a real impression. */
+.stamp {
+  position: relative;
+  border: 3px solid currentColor;
+  padding: 1.25rem 1.5rem;
+  animation: stamp-in 260ms ease-out both;
+}
+.stamp::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px solid currentColor;
+  pointer-events: none;
+}
+@media (min-width: 640px) {
+  .stamp {
+    transform: rotate(-1deg);
+  }
+}
+@keyframes stamp-in {
+  from {
+    opacity: 0;
+    scale: 1.06;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@keyframes pulse-dot {
+  50% {
+    opacity: 0.3;
+  }
+}
+.pulse {
+  animation: pulse-dot 1.1s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stamp,
+  .pulse {
+    animation: none;
+  }
+}
+
+details > summary {
+  cursor: pointer;
 }
