@@ -7,7 +7,7 @@ Idea research: `C:\Users\HomePC\Desktop\skill\idea-research\portaldot-hacker-hou
 
 ## Authoritative status
 
-**BUILDING: INTEGRATION PROVEN on the production server through a private tunnel. Not public, no on-chain record, no owner UAT.**
+**BUILDING: INTEGRATION PROVEN on the public URL https://onescan.103-195-188-198.sslip.io for the check and proof journey. On-chain record and owner UAT of the Fund panel still blocked on tPOT.**
 
 Update this line after every phase. Allowed words: BUILDING, COMPONENT PROVEN,
 INTEGRATION PROVEN, UAT READY, UAT PASS, RELEASE READY, SUBMISSION READY, FINISHED.
@@ -105,9 +105,10 @@ Reference wallet (owner's, public): `5DcritAN6VxWuzBKX7VoLqy8yotyyCA1AX1cSpH63So
 
 ## Next actions, in order
 
-1. Owner must run the corrected Caddy command (see director.private.md). The first attempt added a stray `nonescan` line because PowerShell stripped double quotes. Then confirm the public URL and neighbours.
-2. Walk the true-match journey in the browser: proof page, badge, share link. Only the false-claim path has been walked through the UI so far.
+1. DONE 2026-11-01: public URL live, neighbours match baseline; true and false journeys walked through the form.
+2. Owner handles the DoraHacks submission; the director prepares everything else.
 3. When tPOT arrives: `scripts/new-attester.mjs`, deploy ProofRegistry, test wrong-hash and non-attester reverts and EXTCODEHASH on testnet, set REGISTRY_ADDRESS and ATTESTER_PRIVATE_KEY in the server env file.
 4. Owner UAT of the Fund panel, untested with a real wallet.
 5. Add real usage: run public team contracts, publish a V3 coverage figure, share in Discord.
 6. README (credit unslop and Stageshow, disclose dependencies), security and repo audit, demo video, pitch deck, DoraHacks submission before 2026-11-06 04:00 UTC.
+- 2026-11-01: EXTCODEHASH simulated read-only on the chain: matches keccak of code; funded wallet returns the empty-code hash, so the registry's code-length check is needed; missing account returns 0. ProofRegistry deployment estimated at about 135 tPOT from a funded sender. Requested about 300 tPOT.

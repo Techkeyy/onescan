@@ -328,7 +328,8 @@ export function ProofView({ address }: { address: string }) {
         {p.activity ? (
           <>
             <p>
-              {p.activity.txCount.toLocaleString()} transactions and {p.activity.logCount.toLocaleString()} events seen.
+              {p.activity.txCount.toLocaleString()} {p.activity.txCount === 1 ? "transaction" : "transactions"} and{" "}
+              {p.activity.logCount.toLocaleString()} {p.activity.logCount === 1 ? "event" : "events"} seen.
             </p>
             {p.activity.recent.length === 0 ? (
               <p className="mt-2 text-muted">No events yet</p>
