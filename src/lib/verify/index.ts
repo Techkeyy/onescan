@@ -448,8 +448,10 @@ export async function verify(
   const perCompile = envMs("ONESCAN_COMPILE_TIMEOUT_MS", COMPILE_TIMEOUT_MS);
   const rpcUrl = options.rpcUrl ?? process.env.EVM_RPC_URL ?? DEFAULT_RPC;
   let prefix = "";
+  const latest = new Map<StageId, Stage>();
   const emit = (id: StageId, state: Stage["state"], detail?: string) => {
     const d = detail === undefined ? undefined : prefix + detail;
+    latest.set(id, d === undefined ? { id, state } : { id, state, detail: d });
     try { onStage(d === undefined ? { id, state } : { id, state, detail: d }); } catch { /* UI errors never affect the verdict */ }
   };
   for (const id of STAGES) emit(id, "pending");
@@ -461,10 +463,19 @@ export async function verify(
   const ctx1: Ctx = { ...ctx, budget: firstBudget, deadline: specified ? deadline : deadline - (budget - firstBudget) };
   const first = await verifyOnce(input, ctx1);
   const f = first.failure;
+  const firstStages = new Map(latest);
+  // Stages always end on the pass the verdict rests on, not on an abandoned retry.
+  const restoreFirst = () => {
+    prefix = "";
+    for (const id of STAGES) {
+      const s = firstStages.get(id);
+      if (s) emit(id, s.state, s.detail);
+    }
+  };
   // A specified commit is never second-guessed. Only genuine negatives and timeouts try the deployment commit.
   if (first.match || specified || !f || (f.reason !== "no_match" && f.reason !== "inconclusive")) return first;
 
-  const addNote = (note: string): VerifyResult => ({ ...first, failure: { reason: f.reason, detail: `${f.detail} Also tried to check the repo's last commit before deployment: ${note}.` } });
+  const addNote = (note: string): VerifyResult => (restoreFirst(), { ...first, failure: { reason: f.reason, detail: `${f.detail} Also tried to check the repo's last commit before deployment: ${note}.` } });
   const remaining = deadline - Date.now();
   if (remaining < 15_000) return addNote("no time budget was left");
 
@@ -483,6 +494,7 @@ export async function verify(
   ctx.skipIfSame = ctx1.fingerprint;
   const second = await verifyOnce({ ...input, commit: found.sha }, ctx);
   if (ctx.identical) {
+    restoreFirst();
     return { ...first, failure: { reason: f.reason, detail: `${f.detail} The repo's last commit before deployment (${found.sha.slice(0, 10)}) has identical Solidity sources and settings, so it was not compiled again.` } };
   }
   if (second.match) {

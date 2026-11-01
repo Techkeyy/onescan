@@ -70,7 +70,7 @@ export const FAILURE_COPY: Record<VerifyFailureReason, { title: string; body: st
   },
   no_match: {
     title: "This repo does not match this contract",
-    body: "The repo compiled, but nothing in it produces the code running at this address.",
+    body: "The repo compiled, but none of the compiler settings tried reproduced the code running at this address.",
   },
 };
 
@@ -284,8 +284,8 @@ export function CheckView({ id }: { id: string }) {
         <>
           <Stamp tone="neutral" kicker="Verdict" title="This repo does not match this contract">
             <p>
-              OneScan compiled the repo and compared it with the code running at this address. They are not the same
-              code.
+              OneScan compiled the repo and compared it with the code running at this address. None of the compiler
+              settings it tried reproduced that code.
             </p>
           </Stamp>
           <p className="mt-4 max-w-2xl">

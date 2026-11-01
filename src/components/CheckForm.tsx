@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { apiPostCheck, startFailureMessage } from "./api";
 import { ADDRESS_0X, REPO_INPUT } from "./format";
@@ -24,13 +24,12 @@ const EXAMPLES = [
   },
 ];
 
-export function CheckForm() {
+export function CheckForm({ initial }: { initial: { repo: string; address: string; commit: string } }) {
   const router = useRouter();
-  const params = useSearchParams();
-  const [repo, setRepo] = useState(params.get("repo") ?? "");
-  const [address, setAddress] = useState(params.get("address") ?? "");
-  const [commit, setCommit] = useState(params.get("commit") ?? "");
-  const [showCommit, setShowCommit] = useState(!!params.get("commit"));
+  const [repo, setRepo] = useState(initial.repo);
+  const [address, setAddress] = useState(initial.address);
+  const [commit, setCommit] = useState(initial.commit);
+  const [showCommit, setShowCommit] = useState(!!initial.commit);
   const [errors, setErrors] = useState<{ repo?: string; address?: string; form?: string }>({});
   const [busy, setBusy] = useState(false);
 

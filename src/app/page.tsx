@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import { CheckForm } from "@/components/CheckForm";
 import { HeroSceneLoader } from "@/components/HeroSceneLoader";
 
@@ -9,7 +8,11 @@ const STEPS = [
   "It compares the two. Only a real match gets a public proof page. A mismatch is never listed.",
 ];
 
-export default function Home() {
+type Search = Record<string, string | string[] | undefined>;
+const one = (v: string | string[] | undefined) => (typeof v === "string" ? v : "");
+
+export default async function Home({ searchParams }: { searchParams: Promise<Search> }) {
+  const q = await searchParams;
   return (
     <div>
       <div className="grid items-center gap-x-12 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
@@ -18,9 +21,7 @@ export default function Home() {
             OneScan checks whether a GitHub repo is the code running at a Portaldot V3 contract address.
           </h1>
           <div className="mt-8">
-            <Suspense fallback={<p className="text-muted">Loading the form</p>}>
-              <CheckForm />
-            </Suspense>
+            <CheckForm initial={{ repo: one(q.repo), address: one(q.address), commit: one(q.commit) }} />
           </div>
         </div>
         <HeroSceneLoader />
