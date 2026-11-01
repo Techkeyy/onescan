@@ -4,7 +4,11 @@ import { stripComments } from "./imports";
 /** `pragma solidity` range strings of a source, e.g. "^0.8.20", ">=0.7.0 <0.9.0". */
 export function parsePragmas(src: string): string[] {
   const out: string[] = [];
-  for (const m of stripComments(src).matchAll(/pragma\s+solidity\s+([^;]+);/g)) out.push(m[1].trim());
+  const clean = stripComments(src);
+  // Cut after the last ";" so every "pragma solidity" has a terminator ahead; without this a file of
+  // repeated "pragma solidity " backtracked quadratically.
+  const text = clean.slice(0, clean.lastIndexOf(";") + 1);
+  for (const m of text.matchAll(/pragma\s+solidity\s+([^;]+);/g)) out.push(m[1].trim());
   return out;
 }
 

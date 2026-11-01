@@ -19,6 +19,19 @@ const nextConfig: NextConfig = {
   outputFileTracingExcludes: {
     "/api/**": ["./data/**/*", "./contracts/**/*", "./*.log", "./*.sh", "./director*.md"],
   },
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        ],
+      },
+    ];
+  },
+  poweredByHeader: false,
   turbopack: {
     rules: {
       "*.css": {

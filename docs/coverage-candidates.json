@@ -1,0 +1,272 @@
+[
+  {
+    "repo": "0xNana/RIFT",
+    "address": "0x4438B228A44aF949bcb6417BA13536909f3E37A9",
+    "contract": "FinalityRegistry",
+    "source": "docs/hackathon-submission.md"
+  },
+  {
+    "repo": "0xNana/SWITCH",
+    "address": "0x4c9c0836Be052cE08436E912fcEaB218Ce51e29f",
+    "contract": "SwitchVault",
+    "source": "README.md"
+  },
+  {
+    "repo": "Alike001/setlora",
+    "address": "0x2d17199920251f7eec8a555043c8387194ff5d1b",
+    "contract": "SetloraBatch",
+    "source": "README.md"
+  },
+  {
+    "repo": "Anshv784/potdrive",
+    "address": "0xdd3e268957ebeccfcca61b5676e31e620160d027",
+    "contract": "PotDriveRegistry",
+    "source": "README.md"
+  },
+  {
+    "repo": "Blockchain-Oracle/memdot",
+    "address": "0x24ee3a18c64954d979b7475ccdf58ce4750fb5d1",
+    "contract": "MemDotRegistry",
+    "source": "README.md"
+  },
+  {
+    "repo": "DanhCaTuanNgoc/DotNexus",
+    "address": "0xba114d21CC41a30880CcfA53673B743316387355",
+    "contract": "SlashGuardLeaseRegistry",
+    "source": "DEPLOYMENT.md"
+  },
+  {
+    "repo": "DanhCaTuanNgoc/DotNexus",
+    "address": "0x97e5707FCa341c27D7e6b5cEC5ABFe2d3498610A",
+    "contract": "DotNexusStakingVault",
+    "source": "DEPLOYMENT.md"
+  },
+  {
+    "repo": "Oziman13/allowance",
+    "address": "0xdF8567f1fA9F6aFBe1c8f99453544C35009ac07f",
+    "contract": "Allowance",
+    "source": "README.md"
+  },
+  {
+    "repo": "Timidan/portalnode",
+    "address": "0x072a1022f537a0da496801239725539101a41bb2",
+    "contract": "ValidatorHealth",
+    "source": "README.md"
+  },
+  {
+    "repo": "Venkat5599/portalcanary",
+    "address": "0x62Eacc58CE0FA37F06F24074AFb7B3F22Df708FF",
+    "contract": "CanaryRegistry",
+    "source": "README.md"
+  },
+  {
+    "repo": "devshaydez/kaizen",
+    "address": "0x08fdadd1ebe16234c03b723255cc12fd98a5ef07",
+    "contract": "registry",
+    "source": "docs/TESTING.md"
+  },
+  {
+    "repo": "rudimentall1/verigate-portaldot",
+    "address": "0x87C494a5e4B0A8E055F283767579667E10E046C6",
+    "contract": "PortalDotAgentGuard (V2)",
+    "source": "README.md"
+  },
+  {
+    "repo": "rudimentall1/verigate-portaldot",
+    "address": "0x3f2f484484fbE6e224d058fDfDB6B5A14F09655b",
+    "contract": "PortalDotAgentGuard (V1)",
+    "source": "README.md"
+  },
+  {
+    "repo": "unifyWeb3/plaque",
+    "address": "0x5432e6b89dc3042d47f2be98e971cad9dabab685",
+    "contract": "PlaqueLite",
+    "source": "README.md"
+  },
+  {
+    "repo": "unifyWeb3/plaque",
+    "address": "0xa0e58d0c6392048959c0b16a9d3696fe49d063d6",
+    "contract": "",
+    "source": "evidence/Plaque-deployment.json"
+  },
+  {
+    "repo": "bridge-zero",
+    "address": "0xa02EE16EB03d2cf1aeF199F7658FB8c8E3188ffd",
+    "contract": "vault",
+    "source": "README.md"
+  },
+  {
+    "repo": "jonathan-moore58/bridge-zero",
+    "address": "0xa02EE16EB03d2cf1aeF199F7658FB8c8E3188ffd",
+    "contract": "vault",
+    "source": "README.md"
+  },
+  {
+    "repo": "MohammedSoliman10/portaldot-hackathon-2026-makhzan-soliman",
+    "address": "0x60481DFcFCA34A8F095939D9675eC715127B2e44",
+    "contract": "Makhzan",
+    "source": "README.md"
+  },
+  {
+    "repo": "MohammedSoliman10/portaldot-hackathon-2026-makhzan-soliman",
+    "address": "0x5ee99E8AE165d0C33677C812d70B0b07820c1DCA",
+    "contract": "StorageGate",
+    "source": "README.md"
+  },
+  {
+    "repo": "zkzora/palletdock",
+    "address": "0xdd982913cb04f9e438437e2137ba1452e4b211ed",
+    "contract": "PalletDockStorage",
+    "source": "README.md"
+  },
+  {
+    "repo": "edycutjong/portaldot-hackathon-2026-forklift-edycu",
+    "address": "0x52f0edd92af9ff410ca63ccc83735552e1b2abc7",
+    "contract": "Fork Receipt v2",
+    "source": "README.md"
+  },
+  {
+    "repo": "edycutjong/portaldot-hackathon-2026-ballast-edycu",
+    "address": "0x4832cdb7a89c0539fb2e762ab94fcdb5710a155e",
+    "contract": "ReserveVault (Revive)",
+    "source": "README.md"
+  },
+  {
+    "repo": "a252937166/ReviveCheck",
+    "address": "0xedaf8a25bb583ad164a94191b762414277198df9",
+    "contract": "VerifiedTokenList",
+    "source": "README.md"
+  },
+  {
+    "repo": "omkardongre/StableTap",
+    "address": "0x7510b0A07fE47B293c2F4f097AC1FBFC5CfA7e48",
+    "contract": "PotCheckout",
+    "source": "README.md"
+  },
+  {
+    "repo": "itsjusttu/potkit-portaldot",
+    "address": "0x3c26351ad8b9dc7bb4f837c5b921879c35e20fb7",
+    "contract": "PotKit",
+    "source": "README.md"
+  },
+  {
+    "repo": "lazydevpro/reachpot",
+    "address": "0xcfcdb8ccac9b95534aedbbe9c90e49a6a1d493cf",
+    "contract": "",
+    "source": "README.md"
+  },
+  {
+    "repo": "Sketchify-Dev/rootmark",
+    "address": "0x92B79C5cD9CC8235e3e2718a739BE825e2bd5430",
+    "contract": "PortalAnchor",
+    "source": "README.md"
+  },
+  {
+    "repo": "Sketchify-Dev/rootmark",
+    "address": "0x178B9ED9dB766d2ecda393ca0b780A643a12C31E",
+    "contract": "Emitter",
+    "source": "README.md"
+  },
+  {
+    "repo": "Investorquab/PASTX",
+    "address": "0x2f85A292316f0B3385F0B5499b3490d33E958407",
+    "contract": "PortalDotNativeMarket",
+    "source": "README.md"
+  },
+  {
+    "repo": "Investorquab/PASTX",
+    "address": "0x024b77EBbF04f48a0d921094f7000b18063bdD69",
+    "contract": "PortalDotBridgeEscrow",
+    "source": "README.md"
+  },
+  {
+    "repo": "cipoklean/potfeeds",
+    "address": "0x9b29Fe91ABE65846F0EeFf3989b9C8a496E2260B",
+    "contract": "FeedAggregator",
+    "source": "README.md"
+  },
+  {
+    "repo": "cipoklean/potfeeds",
+    "address": "0xb03395BcC85C921c4CEEF26C771Edb36FF6738C4",
+    "contract": "KeeperRegistry",
+    "source": "README.md"
+  },
+  {
+    "repo": "cipoklean/potfeeds",
+    "address": "0xF1E1Db70Af29f78B79F56135685b2De15147cC8A",
+    "contract": "DemoVault",
+    "source": "README.md"
+  },
+  {
+    "repo": "Saber1Y/RelayMesh",
+    "address": "0xfcfc36e3ea951640d1e495a1e671d66c75eb5123",
+    "contract": "IntentRegistry",
+    "source": "README.md"
+  },
+  {
+    "repo": "Saber1Y/RelayMesh",
+    "address": "0x0a4e4bef58f22a47f28cece57b41ba67dbd5ae5e",
+    "contract": "ReceiptBatchRegistry",
+    "source": "README.md"
+  },
+  {
+    "repo": "Saber1Y/RelayMesh",
+    "address": "0x971d45f0daa772c02078ad6349c1bcffd833b4d5",
+    "contract": "ReceiptBatchLog",
+    "source": "README.md"
+  },
+  {
+    "repo": "Firzadf/nodescope",
+    "address": "0xd48da7eff3264bdd51a86b873da9ff6997aae99c",
+    "contract": "Registry",
+    "source": "README.md"
+  },
+  {
+    "repo": "Firzadf/nodescopezero",
+    "address": "0xd48da7eff3264bdd51a86b873da9ff6997aae99c",
+    "contract": "Registry",
+    "source": "README.md"
+  },
+  {
+    "repo": "blueyellow1/portlg-final",
+    "address": "0x44406CD3e7ccE420c316D015FEE74303F16629E5",
+    "contract": "PORTLGuardLite",
+    "source": "README.md"
+  },
+  {
+    "repo": "longbds0108/PortaldotL",
+    "address": "0x6e79287f62B47307B5b7349072c51AdAF8833d54",
+    "contract": "BlindBidMarket",
+    "source": "README.md"
+  },
+  {
+    "repo": "s70239176-ctrl/katalyst",
+    "address": "0x786DEF20A47b7B22c67eBaac3A9a3b3D5C0ddD46",
+    "contract": "Vault v2",
+    "source": "README.md"
+  },
+  {
+    "repo": "memeshee/twinkey",
+    "address": "0x19d5aa109cbf0d4e0a126f1438ea73b619cb7725",
+    "contract": "",
+    "source": "README.md"
+  },
+  {
+    "repo": "wngstnr-code/potluck",
+    "address": "0xef9305561eb0c34d205dfa0d9099a105f44282eb",
+    "contract": "PotluckRegistry",
+    "source": "README.md"
+  },
+  {
+    "repo": "iscyman/pot-watch",
+    "address": "0xeae1fb99ac651fd8a8bc23fb65dc51acb925429d",
+    "contract": "AlertRegistry",
+    "source": "README.md"
+  },
+  {
+    "repo": "QuyTu9868/bond-market-portaldot",
+    "address": "0x52AdCE6b8A11E8FbfA57c435B99e57d4835B84c3",
+    "contract": "",
+    "source": "README.md"
+  }
+]

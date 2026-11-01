@@ -61,8 +61,11 @@ export function parseRemappingsTxt(text: string): string[] {
 }
 
 /** Regex-only read of the first optimizer / viaIR / evmVersion in a hardhat config. */
-export function parseHardhatConfig(text: string): SettingsPart {
+export function parseHardhatConfig(raw: string): SettingsPart {
   const out: SettingsPart = {};
+  // Cut after the last "}" so the optimizer block always has a closing brace ahead; without this a file
+  // of repeated "optimizer: {" backtracked quadratically.
+  const text = raw.slice(0, raw.lastIndexOf("}") + 1);
   const opt = /optimizer\s*:\s*\{([^}]*)\}/.exec(text);
   if (opt) {
     const en = /enabled\s*:\s*(true|false)/.exec(opt[1]);

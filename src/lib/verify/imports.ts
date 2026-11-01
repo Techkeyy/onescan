@@ -30,10 +30,50 @@ export function stripComments(src: string): string {
 
 /** Import path strings of a Solidity source. */
 export function parseImports(src: string): string[] {
+  // One linear pass. The previous single regex (`import\s+[^;"']*?\bfrom\s+"..."`) backtracked
+  // quadratically on a file like "import import import ...", which blocked the server for minutes.
   const clean = stripComments(src);
   const out: string[] = [];
-  const re = /(?:^|[;{}\s])import\s+(?:[^;"']*?\bfrom\s+)?["']([^"']+)["']/g;
-  for (const m of clean.matchAll(re)) out.push(m[1]);
+  const n = clean.length;
+  const isStop = (c: string) => c === ";" || c === '"' || c === "'";
+  let stopAt = -1; // first ; or quote at or after the last scan start, reused while candidates stay before it
+  const stopFrom = (from: number) => {
+    if (from <= stopAt) return stopAt;
+    let k = from;
+    while (k < n && !isStop(clean[k])) k++;
+    stopAt = k;
+    return k;
+  };
+  let openAt = -1; // closing-quote cache for the opening quote at openAt
+  let closeAt = -1;
+  const closeOf = (open: number) => {
+    if (open === openAt) return closeAt;
+    let k = open + 1;
+    while (k < n && clean[k] !== '"' && clean[k] !== "'") k++;
+    openAt = open;
+    closeAt = k;
+    return k;
+  };
+  const re = /(?:^|[;{}\s])import(?=\s)/g;
+  for (let m = re.exec(clean); m; m = re.exec(clean)) {
+    let i = m.index + m[0].length;
+    while (i < n && /\s/.test(clean[i])) i++;
+    let open = -1;
+    if (clean[i] === '"' || clean[i] === "'") open = i;
+    else {
+      const s = stopFrom(i);
+      if (s < n && clean[s] !== ";") {
+        let e = s;
+        while (e > i && /\s/.test(clean[e - 1])) e--;
+        if (e < s && e - 4 >= i && clean.slice(e - 4, e) === "from" && (e - 4 === i || !/\w/.test(clean[e - 5]))) open = s;
+      }
+    }
+    if (open < 0) continue;
+    const close = closeOf(open);
+    if (close >= n || close === open + 1) continue;
+    out.push(clean.slice(open + 1, close));
+    re.lastIndex = close + 1;
+  }
   return out;
 }
 

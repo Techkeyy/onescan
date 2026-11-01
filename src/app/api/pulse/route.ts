@@ -5,22 +5,16 @@ import { json } from "../_lib/util";
 
 export const dynamic = "force-dynamic";
 
-// Many viewers share one chain read.
-const BLOCK_TTL_MS = 4000;
-let cached: { at: number; block: number | null } = { at: 0, block: null };
-
-async function block(): Promise<number | null> {
-  if (Date.now() - cached.at < BLOCK_TTL_MS) return cached.block;
-  const value = await getBlockNumber().catch(() => null);
-  cached = { at: Date.now(), block: value };
-  return value;
-}
+// Every open page polls this, so viewers share one chain read and one database read.
+const TTL_MS = 4000;
+let cached: { at: number; pulse: Pulse } | null = null;
 
 export async function GET() {
+  if (cached && Date.now() - cached.at < TTL_MS) return json(cached.pulse);
   const store = getStore();
   const proofs = store.listProofs();
   const pulse: Pulse = {
-    block: await block(),
+    block: await getBlockNumber().catch(() => null),
     queued: store.countQueued(),
     proofs: proofs.length,
     exact: proofs.filter((p) => p.match.kind === "exact").length,
@@ -33,5 +27,6 @@ export async function GET() {
       checkedAt: p.checkedAt,
     })),
   };
+  cached = { at: Date.now(), pulse };
   return json(pulse);
 }
