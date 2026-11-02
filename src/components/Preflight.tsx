@@ -42,7 +42,7 @@ export function Preflight({ address }: { address: string }) {
   return (
     <p className="mt-2 text-sm text-muted">
       <span className="font-medium text-ok">Contract found.</span> {d.bytes.toLocaleString()} bytes of EVM code
-      {d.compiler ? `, built with solc ${d.compiler}.` : ", with no compiler version stored, so it cannot be checked."}
+      {d.compiler ? `, built with solc ${d.compiler}.` : ". It stores no compiler version, so OneScan will try the version the repo names."}
       {d.proof && (
         <>
           {" "}

@@ -47,3 +47,4 @@ next-env.d.ts
 /contracts/lib
 /.claude/settings.local.json
 /director.private.md
+/submission

@@ -232,8 +232,8 @@ export function ProofView({ address }: { address: string }) {
           <p>The code running on-chain and the code in the repo are identical, including the embedded metadata hash.</p>
         ) : (
           <p>
-            The running code is the same as the code in the repo. The metadata fingerprint embedded at the end of the
-            bytecode differs, which usually means a comment, a path or a build setting changed. The behavior does not.
+            The running code is the same as the code built from the repo. The fingerprint a compiler can embed differs
+            or is absent, so comments and file paths are not covered by this match. The running code is.
           </p>
         )}
       </Stamp>

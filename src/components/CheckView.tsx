@@ -34,8 +34,8 @@ export const FAILURE_COPY: Record<VerifyFailureReason, { title: string; body: st
     body: "OneScan only compares Solidity contracts that run as EVM bytecode. Checking PolkaVM contracts is planned for later.",
   },
   no_compiler_metadata: {
-    title: "This contract does not say which compiler built it",
-    body: "OneScan reads the Solidity compiler version from metadata stored at the end of the deployed code. This contract has none, so there is no version to compile with.",
+    title: "OneScan could not confirm this contract",
+    body: "This contract does not store which compiler built it. OneScan tried the versions the repo points to, and none reproduced the code. The real version may be one it did not try, so this is not a verdict against the repo.",
   },
   repo_not_found: {
     title: "That repo or commit could not be found",

@@ -25,7 +25,7 @@ const VERDICTS: Verdict[] = [
   {
     title: "Code matches",
     tone: "text-ok",
-    body: "The running code is the same. Only the embedded fingerprint differs, usually a comment or a file path.",
+    body: "The running code is the same. Only the embedded fingerprint differs or is absent, so comments and file paths are not covered.",
     cell: (i) => (i >= CELLS - META ? "meta-diff" : "same"),
     note: "All the code is equal. Only the fingerprint at the end differs.",
   },
