@@ -5,7 +5,7 @@
 // UNTESTED with a real wallet and real tokens. Do not claim it works until the owner has tried it.
 
 import { useRef, useState } from "react";
-import { toTwin } from "@/lib/address";
+import { parseAddress, toTwin } from "@/lib/address";
 import type { AddressView } from "@/lib/types";
 import { apiGet } from "./api";
 import { ADDRESS_0X, formatUnits, parseUnits, shorten } from "./format";
@@ -34,6 +34,7 @@ type Phase =
   | { k: "confirmed"; hash: string; before: Balances; after: Balances }
   | { k: "unconfirmed"; hash: string; before: Balances }
   | { k: "cancelled" }
+  | { k: "mapped"; h160: string; already: boolean }
   | { k: "error"; kind: "insufficient" | "node" | "failed" | "input"; message: string };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -54,6 +55,8 @@ function rose(before: Balances, after: Balances): boolean {
     (before.evm !== null && after.evm !== null && after.evm > before.evm)
   );
 }
+
+type OptionalAccount = { isSome: boolean; unwrap(): { toString(): string } };
 
 function fmt(v: bigint | null, decimals: number) {
   return v === null ? "Could not read" : `${formatUnits(v.toString(), decimals).full} tPOT`;
@@ -162,7 +165,17 @@ export default function FundPanel({ target: initialTarget, onChanged }: { target
         return;
       }
 
-      const dest = toTwin(to);
+      if (to === parseAddress(from)?.h160.toLowerCase()) {
+        setPhase({
+          k: "error",
+          kind: "input",
+          message: "That is the 0x address of this same account, so there is nothing to send. Use Map this account instead.",
+        });
+        return;
+      }
+      // A mapped 0x address belongs to its original account. Anything else is a key like MetaMask's.
+      const owner = (await api.query.revive.originalAccount(to)) as unknown as OptionalAccount;
+      const dest = owner.isSome ? owner.unwrap().toString() : toTwin(to);
       const tx = api.tx.balances.transferKeepAlive(dest, value.toString());
 
       // Specific insufficient-balance check before the wallet opens.
@@ -253,6 +266,84 @@ export default function FundPanel({ target: initialTarget, onChanged }: { target
     }
   }
 
+  async function mapAccount() {
+    if (busy.current || !from) return;
+    const h160 = parseAddress(from)?.h160.toLowerCase();
+    if (!h160) return;
+    busy.current = true;
+    setPhase({ k: "node" });
+    let api: import("@polkadot/api").ApiPromise | null = null;
+    try {
+      const [{ ApiPromise, WsProvider }, dapp] = await Promise.all([
+        import("@polkadot/api"),
+        import("@polkadot/extension-dapp"),
+      ]);
+      const provider = new WsProvider(WS_URL);
+      try {
+        api = await Promise.race([
+          ApiPromise.create({ provider, noInitWarn: true }),
+          sleep(NODE_TIMEOUT_MS).then(() => {
+            throw new Error("node-timeout");
+          }),
+        ]);
+      } catch {
+        try {
+          await provider.disconnect();
+        } catch {}
+        setPhase({ k: "error", kind: "node", message: "Could not reach the Portaldot node. Nothing changed. Try again in a moment." });
+        return;
+      }
+      const isMapped = async () => ((await api!.query.revive.originalAccount(h160)) as unknown as OptionalAccount).isSome;
+      if (await isMapped()) {
+        setPhase({ k: "mapped", h160, already: true });
+        onChanged?.();
+        return;
+      }
+      const injector = await dapp.web3FromAddress(from);
+      setPhase({ k: "wallet" });
+      await new Promise<void>((resolve, reject) => {
+        const a = api!;
+        a.tx.revive
+          .mapAccount()
+          .signAndSend(from, { signer: injector.signer }, (res) => {
+            if (res.dispatchError) {
+              let text = res.dispatchError.toString();
+              if (res.dispatchError.isModule) {
+                const m = a.registry.findMetaError(res.dispatchError.asModule);
+                text = `${m.section}.${m.name}`;
+              }
+              reject(new Error(`dispatch:${text}`));
+              return;
+            }
+            if (res.status.isReady || res.status.isBroadcast) setPhase({ k: "submitted" });
+            if (res.status.isInBlock) resolve();
+          })
+          .catch(reject);
+      });
+      setPhase({ k: "inblock", hash: "" });
+      if (await isMapped()) {
+        setPhase({ k: "mapped", h160, already: false });
+        onChanged?.();
+      } else {
+        setPhase({ k: "error", kind: "failed", message: "The request reached a block, but the chain does not show this account as mapped." });
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (/cancel|reject|denied/i.test(msg)) {
+        setPhase({ k: "cancelled" });
+      } else if (/1010|Priority|balance|funds|InsufficientBalance|FundsUnavailable|StorageDepositNotEnoughFunds/i.test(msg)) {
+        setPhase({ k: "error", kind: "insufficient", message: "This account does not hold enough tPOT to pay the fee and the refundable deposit. Nothing changed." });
+      } else {
+        setPhase({ k: "error", kind: "failed", message: `Mapping failed: ${msg.replace("dispatch:", "")}. Nothing changed.` });
+      }
+    } finally {
+      busy.current = false;
+      try {
+        await api?.disconnect();
+      } catch {}
+    }
+  }
+
   async function checkAgain(before: Balances, hash: string) {
     if (busy.current) return;
     busy.current = true;
@@ -269,7 +360,7 @@ export default function FundPanel({ target: initialTarget, onChanged }: { target
 
   const working = ["connecting", "node", "wallet", "submitted", "inblock", "confirming"].includes(phase.k);
   const showForm =
-    ["ready", "cancelled", "confirmed"].includes(phase.k) ||
+    ["ready", "cancelled", "confirmed", "unconfirmed", "mapped"].includes(phase.k) ||
     phase.k === "error" ||
     (working && phase.k !== "connecting");
   const locked = working;
@@ -277,14 +368,14 @@ export default function FundPanel({ target: initialTarget, onChanged }: { target
   return (
     <section aria-labelledby="fund-title" className="mt-10 border-t-2 border-ink pt-5">
       <h2 id="fund-title" className="font-serif text-2xl font-medium">
-        Fund an EVM address
+        Use your tPOT on the EVM side
       </h2>
       <p className="mt-2 max-w-2xl">
-        Move tPOT from your 5... wallet to a 0x address. Your wallet asks you to approve the transfer. OneScan never
-        sees your keys and never asks for a seed phrase.
+        Your 5... account already has a 0x address. Map it once and the same balance is usable on the EVM side. Your
+        wallet asks you to approve each step. OneScan never sees your keys and never asks for a seed phrase.
       </p>
       <p className="mt-1 max-w-2xl text-sm text-muted">
-        This tool has not yet been tested with a real wallet and real tokens. Try a small amount first.
+        These tools have not yet been tested with a real wallet and real tokens. Try a small amount first.
       </p>
 
       <div className="mt-4 space-y-4" aria-live="polite">
@@ -313,6 +404,29 @@ export default function FundPanel({ target: initialTarget, onChanged }: { target
             </button>
           </Notice>
         )}
+
+        {phase.k === "mapped" && (
+          <Notice tone="ok" title={phase.already ? "This account is already mapped" : "Confirmed: this account is mapped"} role="status">
+            <p className="break-all">
+              Its 0x address is <code className="font-mono text-sm">{phase.h160}</code>, and it uses the same balance.
+            </p>
+          </Notice>
+        )}
+
+        {showForm && (
+          <div className="border border-rule bg-surface p-4">
+            <h3 className="font-medium">Map this account</h3>
+            <p className="mt-1 text-muted">
+              Registers your account for contract use. It costs a small fee and a deposit you can get back by unmapping.
+              MetaMask cannot sign for this 0x address, because its key is your 5... wallet.
+            </p>
+            <button type="button" onClick={mapAccount} disabled={locked} className={`${btnPrimary} mt-3`}>
+              {working ? "Working" : "Map this account"}
+            </button>
+          </div>
+        )}
+
+        {showForm && <h3 className="font-medium">Or send tPOT to a MetaMask address</h3>}
 
         {showForm && (
           <form

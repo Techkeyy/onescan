@@ -7,7 +7,7 @@ Idea research: `C:\Users\HomePC\Desktop\skill\idea-research\portaldot-hacker-hou
 
 ## Authoritative status
 
-**BUILDING: INTEGRATION PROVEN on the public URL https://onescan.103-195-188-198.sslip.io for the check and proof journey. On-chain record and owner UAT of the Fund panel still blocked on tPOT.**
+**BUILDING: INTEGRATION PROVEN on the public URL https://onescan.103-195-188-198.sslip.io. ProofRegistry not deployed and account tools not tested with a wallet: both wait on tPOT. Owner's address has 0 tPOT; organizer replied "ok" on 2026-11-02.**
 
 Update this line after every phase. Allowed words: BUILDING, COMPONENT PROVEN,
 INTEGRATION PROVEN, UAT READY, UAT PASS, RELEASE READY, SUBMISSION READY, FINISHED.
@@ -112,3 +112,15 @@ Reference wallet (owner's, public): `5DcritAN6VxWuzBKX7VoLqy8yotyyCA1AX1cSpH63So
 5. Add real usage: run public team contracts, publish a V3 coverage figure, share in Discord.
 6. README (credit unslop and Stageshow, disclose dependencies), security and repo audit, demo video, pitch deck, DoraHacks submission before 2026-11-06 04:00 UTC.
 - 2026-11-01: EXTCODEHASH simulated read-only on the chain: matches keccak of code; funded wallet returns the empty-code hash, so the registry's code-length check is needed; missing account returns 0. ProofRegistry deployment estimated at about 135 tPOT from a funded sender. Requested about 300 tPOT.
+- 2026-11-02: redesign live: landing page and /check workspace, live SVG components, scroll reveals. Found by testing: /api/address returned 500 in production (incomplete bundle and unresolved links); fixed with tracing includes and scripts/package-standalone.sh.
+- 2026-11-02: real run over 43 team pairs exposed 4 false negatives and 8 stripped-metadata contracts. Engine now: wider settings ladder, submodules at pinned commit, no-metadata mode, and no_match only when every setting ran, dependencies were pinned and every source built. Final: 40 matched, 0 no_match, 3 no verdict. False claims still refused on the live site (32s by server clock). 106 tests pass.
+- 2026-11-02: organizer: official explorer is node-console. A 5... account uses revive.mapAccount and then the same balance is usable as its 0x address. Verified on-chain on 6 mapped accounts: EVM balance = native minus the 0.1 tPOT reserve. Added Map this account; send blocks a transfer to your own twin and resolves mapped targets to their real owner. Untested with a wallet.
+- Attester public address 0xDc474EfaBB69fAe76c5201A986a06CDA3A696d26, native form 5H3XaJ3WB5V2JmFrKPnofKFdMVstQux2dKqfxk28VRdiGzpe. Key only in gitignored .env.local.
+
+## When tPOT arrives
+
+1. Owner sends about 200 tPOT to the attester's 0x address with the Send tool. This doubles as the send test. Confirm with eth_getBalance.
+2. `DEPLOYER_PRIVATE_KEY` = attester key. Dry-run `scripts/deploy-registry.mjs`, then `--send`. Record address, tx hash, block.
+3. Test on testnet: wrong hash reverts, non-attester reverts, good record confirms.
+4. Put `REGISTRY_ADDRESS` and `ATTESTER_PRIVATE_KEY` in the server env file, restart only onescan. Do one real check and see Recorded on-chain. Existing proofs stay unrecorded unless re-run.
+5. Fill README's Testnet deployment table and the deck. Owner tests Map this account one step at a time.

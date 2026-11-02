@@ -51,7 +51,7 @@ Open the live app and press "Watch it refuse a false claim" on the landing page,
 | # | Repo | Address | What you should see |
 | --- | --- | --- | --- |
 | 1 | `Firzadf/nodescope` | `0xd48da7eff3264bdd51a86b873da9ff6997aae99c` | Exact match. 5 seconds on the production server. |
-| 2 | `Gieez/portaldot-revivescope` | `0xd48da7eff3264bdd51a86b873da9ff6997aae99c` | Refused: a real repo, but not the code at NodeScope's address. 21 seconds, because every settings combination is tried before saying no. |
+| 2 | `Gieez/portaldot-revivescope` | `0xd48da7eff3264bdd51a86b873da9ff6997aae99c` | Refused: a real repo, but not the code at NodeScope's address. 32 seconds, because every settings combination is tried before saying no. |
 | 3 | `Rohitamalraj/DotProof` | `0x7e3444c1f9dbd53dea5ebc8160522b154857566b` | Fails at the default branch, then matches exactly at the repo's last commit before deployment, because the code changed after it was deployed. 93 seconds. |
 
 These are other builders' public repos, used as test inputs. Example 3 is slower than 60 seconds; it is there because it shows the fallback.
@@ -100,19 +100,19 @@ To make an attester key without printing it, run `node scripts/new-attester.mjs`
 
 | Suite | Command | Result |
 | --- | --- | --- |
-| TypeScript | `npm test` | 10 files, 74 tests, all passed, in 389 s |
+| TypeScript | `npm test` | 14 files, 106 tests, all passed, in 16 minutes |
 | Solidity | `forge test` in `contracts/` | 8 tests, all passed |
 
-By file: `verify.test.ts` 32, `live.test.ts` 10, `oz.test.ts` 6, `attest.test.ts` 6, `address.test.ts` 5, `jobs.test.ts` 4, `parse-limits.test.ts` 4, `util.test.ts` 3, `chain.test.ts` 2, `store.test.ts` 2.
+Includes 79 tests of the check engine, with live runs against the real chain, GitHub and compiler.
 
-`live.test.ts` and `oz.test.ts` call the real testnet RPC, GitHub and the compiler binaries, which is why the run is slow. `attest.test.ts` starts a local `anvil` (from Foundry), so it needs Foundry on your PATH. It never contacts Portaldot. A run from a fresh clone of the commit before `parse-limits.test.ts` was added gave 9 files and 70 tests, all passed. If you have also run `next build` in the same folder, vitest picks up the copy of the tests that Next writes to `.next/standalone` and the two copies of `attest.test.ts` fight over one port; run `npx vitest run --exclude ".next/**"` or delete that folder.
+`live.test.ts` and `oz.test.ts` call the real testnet RPC, GitHub and the compiler binaries, which is why the run is slow. `attest.test.ts` starts a local `anvil` (from Foundry), so it needs Foundry on your PATH. It never contacts Portaldot.
 
 ## How I tried to break it
 
 | Input | Result | Where it is exercised |
 | --- | --- | --- |
 | Right repo, right address | `exact` match | `live.test.ts`; production server, 5 s |
-| Real repo, wrong address (both directions) | `no_match` | `live.test.ts`; production server, 21 s |
+| Real repo, wrong address (both directions) | `no_match` | `live.test.ts`; production server, 32 s |
 | Code changed after deployment | Default branch fails, exact match at the last commit before deployment | `oz.test.ts`; production server, 93 s |
 | A budget too small to finish a real match | `inconclusive`, never `no_match` | `live.test.ts` |
 | PolkaVM contract | `not_evm`, unsupported | `live.test.ts` |
@@ -146,19 +146,35 @@ You do not have to trust it: every proof page lists the steps to repeat the chec
 ## Limitations
 
 - `ProofRegistry` has not been deployed to Portaldot (see above). Until it is, proof pages show that a record is pending.
-- The Fund panel (sends tPOT from a Substrate wallet to an address's EVM twin) has not been tested with a real wallet.
+- The account tools (map a 5... account for EVM use, or send tPOT to a MetaMask address) have not been tested with a real wallet.
 - EVM bytecode only. Contracts built for PolkaVM, and ink! contracts, are not verified.
 - A record on chain is OneScan's attestation, not a trustless proof. Anyone can reproduce the check.
-- Git submodule dependencies are fetched at the submodule's default branch head, not at the commit the repo pins. A contract that depends on an older submodule version can fail to match for that reason.
+- Git submodule dependencies are fetched at the commit the repo pins. If GitHub's API cannot be read for that pin (for example a rate limit), the fetch uses the latest code and a failed comparison is reported as unable to finish.
 - A contract deployed from code that was never committed can never match.
 - Contracts created by another contract (a factory) have no creation block or deployer shown, because the lookup finds direct deployments only.
 - Public GitHub repos and Solidity only. Portaldot V3 testnet only.
 - One check runs at a time. State lives in a local SQLite file on one server.
-- I have not measured adoption. This is a hackathon build with a handful of test checks behind it.
+- A contract with no stored compiler version is tried with the version its repo names. A failure there is never a verdict, because the real version may be one that was not tried.
+- Yul sources are not compiled.
+- I have not measured adoption. Other teams' contracts were checked from their public repos; they have not been asked to use OneScan yet.
 
 ## Coverage
 
-A read-only scan at block 283,513 found 132 contracts deployed directly on the EVM side of Portaldot V3 (successful contract-creation transactions; contracts created by other contracts are not counted). I am running OneScan over the public repos of those teams. Matched so far: TBD.
+A read-only scan at block 284,796 found 132 contracts deployed directly on the EVM side of Portaldot V3 (successful contract-creation transactions; contracts created by other contracts are not counted).
+
+I ran OneScan over 43 repo and contract pairs found in public Hacker House repos, through the public site, on a single-CPU server:
+
+| Result | Count | Notes |
+| --- | --- | --- |
+| Matched | 40 | Public proof pages. Includes contracts built with metadata stripped, and contracts whose code changed after deployment |
+| Does not match | 0 | The early engine reported 4. All 4 were real matches, missed because of untried settings or changed code, and led to the fixes below |
+| No verdict | 3 | Two appear hand-written in Yul and one repo has no Solidity source. OneScan says so instead of guessing |
+
+That leaves 42 public proofs across 32 repos, covering 32 of the 132 direct deployments. The live meter on the landing page shows the current count.
+
+**What the false negatives changed.** "Does not match" is now earned only when every settings combination ran, the dependencies were the ones the repo pinned, and every source file was built. Anything less is reported as unable to finish, not as a verdict against the repo.
+
+False claims were still refused after these changes: real repos checked against other teams' contracts never matched in any test run.
 
 ## Why Portaldot V3 needs this
 
