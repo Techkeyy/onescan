@@ -131,7 +131,7 @@ export function isWantedPath(rel: string): boolean {
   const segs = rel.split("/");
   if (segs.includes("node_modules") || segs.includes(".git")) return false;
   const base = segs[segs.length - 1];
-  return base.endsWith(".sol") || base.endsWith(".toml") || WANTED_NAMES.has(base) || HARDHAT_CONFIG.test(base);
+  return base.endsWith(".sol") || base.endsWith(".yul") || base.endsWith(".toml") || WANTED_NAMES.has(base) || HARDHAT_CONFIG.test(base);
 }
 
 export type Extracted = {

@@ -1,4 +1,4 @@
-import { parseImports, resolveImportPath, externalUrl, type Remapping, type Submodule } from "./imports";
+import { parseImports, resolveImportPath, externalSource, type Remapping, type Submodule } from "./imports";
 
 export type Graph = {
   /** Every source unit found (repo files and fetched dependencies), by solc source-unit name. */
@@ -7,6 +7,8 @@ export type Graph = {
   edges: Map<string, string[]>;
   /** key -> import strings that could not be found. */
   missing: Map<string, string[]>;
+  /** key -> why this fetched dependency is not known to be the repo's pinned version. */
+  guesses: Map<string, string>;
 };
 
 const MAX_EXTERNAL = 600;
@@ -25,11 +27,13 @@ export async function buildGraph(o: {
   remaps: Remapping[];
   subs: Submodule[];
   versions: Map<string, string>;
+  pinnedPkgs?: Set<string>;
   fetchText: (url: string) => Promise<string | null>;
 }): Promise<Graph> {
   const sources = new Map<string, string>();
   const edges = new Map<string, string[]>();
   const missing = new Map<string, string[]>();
+  const guesses = new Map<string, string>();
   const loads = new Map<string, Promise<string | null>>();
   let external = 0;
 
@@ -39,9 +43,13 @@ export async function buildGraph(o: {
       const local = o.repoFiles.get(key);
       if (local !== undefined) p = Promise.resolve(local);
       else {
-        const url = externalUrl(key, o.subs, o.versions);
-        if (!url || external >= MAX_EXTERNAL) p = Promise.resolve(null);
-        else { external++; p = o.fetchText(url); }
+        const src = externalSource(key, o.subs, o.versions, o.pinnedPkgs ?? new Set());
+        if (!src || external >= MAX_EXTERNAL) p = Promise.resolve(null);
+        else {
+          external++;
+          if (src.guess) guesses.set(key, src.guess);
+          p = o.fetchText(src.url);
+        }
       }
       loads.set(key, p);
     }
@@ -72,13 +80,14 @@ export async function buildGraph(o: {
     });
     frontier = next;
   }
-  return { sources, edges, missing };
+  return { sources, edges, missing, guesses };
 }
 
 /** Source units reachable from a root, and the import strings missing along the way. */
-export function closureOf(g: Graph, root: string): { keys: string[]; missing: string[] } {
+export function closureOf(g: Graph, root: string): { keys: string[]; missing: string[]; guesses: string[] } {
   const keys: string[] = [];
   const miss: string[] = [];
+  const guessed = new Set<string>();
   const seen = new Set<string>();
   const stack = [root];
   while (stack.length) {
@@ -86,8 +95,10 @@ export function closureOf(g: Graph, root: string): { keys: string[]; missing: st
     if (seen.has(k)) continue;
     seen.add(k);
     keys.push(k);
+    const why = g.guesses.get(k);
+    if (why) guessed.add(why);
     for (const m of g.missing.get(k) ?? []) miss.push(`${k} imports ${m}`);
     for (const t of g.edges.get(k) ?? []) stack.push(t);
   }
-  return { keys, missing: miss };
+  return { keys, missing: miss, guesses: [...guessed] };
 }

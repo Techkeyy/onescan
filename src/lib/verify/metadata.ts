@@ -86,3 +86,21 @@ export function compareRuntime(local: LocalContract, chainHex: string): CompareR
   if (a !== b) return null;
   return loc.trailer === chain.trailer ? "exact" : "code";
 }
+
+/**
+ * Compare compiled runtime code with on-chain code that stores NO metadata: whole code, equal length and bytes,
+ * immutables and library placeholders masked on both sides. stripLocalMetadata removes solc's own CBOR tail from the
+ * compiled side (compilers before 0.8.18 cannot omit it).
+ */
+export function compareWhole(local: LocalContract, chainHex: string, stripLocalMetadata: boolean): boolean {
+  const chain = strip0x(chainHex);
+  let obj = maskRanges(strip0x(local.object).replace(/[^0-9a-f]/g, "0"), local.linkRefs);
+  if (stripLocalMetadata) {
+    const s = splitMetadata(obj);
+    if (s.decoded) obj = s.body;
+  }
+  if (obj.length < 2 || obj.length !== chain.length) return false;
+  const ranges = [...local.immutableRefs, ...local.linkRefs];
+  if (obj.startsWith("73" + "00".repeat(20))) ranges.push({ start: 1, length: 20 });
+  return maskRanges(obj, ranges) === maskRanges(chain, ranges);
+}

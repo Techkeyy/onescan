@@ -19,13 +19,14 @@ type SolcList = {
 
 const inflight = new Map<string, Promise<string>>();
 
-async function loadList(dir: string, version: string): Promise<SolcList> {
+async function loadList(dir: string, version: string | null): Promise<SolcList> {
   const file = join(dir, "list.json");
   try {
     const st = await stat(file);
     const list = JSON.parse(await readFile(file, "utf8")) as SolcList;
-    if (list.releases?.[version] && Date.now() - st.mtimeMs < 24 * 3600_000) return list;
-    if (list.releases?.[version]) {
+    if (version === null && list.releases && Date.now() - st.mtimeMs < 24 * 3600_000) return list;
+    if (version !== null && list.releases?.[version] && Date.now() - st.mtimeMs < 24 * 3600_000) return list;
+    if (version !== null && list.releases?.[version]) {
       // stale but sufficient: releases never change once published
       return list;
     }
@@ -38,6 +39,18 @@ async function loadList(dir: string, version: string): Promise<SolcList> {
   await writeFile(file + ".tmp", text);
   await rename(file + ".tmp", file);
   return list;
+}
+
+/** All released solc versions (highest first), from the cached or downloaded list.json. */
+export async function listReleases(override?: string): Promise<string[]> {
+  const dir = join(dataDir(override), "solc");
+  await mkdir(dir, { recursive: true });
+  const list = await loadList(dir, null);
+  const num = (v: string) => v.split(".").map(Number);
+  return Object.keys(list.releases).filter((v) => /^\d+\.\d+\.\d+$/.test(v)).sort((a, b) => {
+    const x = num(a), y = num(b);
+    return y[0] - x[0] || y[1] - x[1] || y[2] - x[2];
+  });
 }
 
 /** Path of the cached soljson for an exact release version, downloading and checking sha256 if needed. */

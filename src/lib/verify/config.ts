@@ -6,7 +6,19 @@ export type SettingsPart = {
   runs?: number;
   viaIR?: boolean;
   evmVersion?: string;
+  /** Pinned compiler, e.g. "0.8.24" (foundry solc / solc_version, hardhat solidity version). */
+  solcVersion?: string;
+  /** foundry cbor_metadata / hardhat metadata.appendCBOR. */
+  cborMetadata?: boolean;
+  /** foundry bytecode_hash / hardhat metadata.bytecodeHash. */
+  bytecodeHash?: string;
 };
+
+/** "0.8.24" or "v0.8.24" -> "0.8.24"; anything else (paths, ranges, "auto") -> undefined. */
+export function cleanSolcVersion(s: string): string | undefined {
+  const m = /^v?(\d+\.\d+\.\d+)$/.exec(s.trim());
+  return m ? m[1] : undefined;
+}
 
 export type RepoConfig = SettingsPart & { remappings: string[] };
 
@@ -50,6 +62,9 @@ export function parseFoundryToml(text: string): RepoConfig {
     else if (key === "optimizer_runs") { const n = Number(value.replace(/_/g, "")); if (Number.isInteger(n) && n >= 0) out.runs = n; }
     else if (key === "via_ir") { if (/^(true|false)$/.test(value)) out.viaIR = value === "true"; }
     else if (key === "evm_version") { const s = tomlStrings(value)[0]; if (s && /^[a-z0-9]+$/i.test(s)) out.evmVersion = s.toLowerCase(); }
+    else if (key === "solc" || key === "solc_version") { const s = tomlStrings(value)[0]; const v = s ? cleanSolcVersion(s) : undefined; if (v) out.solcVersion = v; }
+    else if (key === "cbor_metadata") { if (/^(true|false)$/.test(value)) out.cborMetadata = value === "true"; }
+    else if (key === "bytecode_hash") { const s = tomlStrings(value)[0]; if (s && /^[a-z0-9]+$/i.test(s)) out.bytecodeHash = s.toLowerCase(); }
     else if (key === "remappings") out.remappings.push(...tomlStrings(value));
   }
   return out;
@@ -77,6 +92,12 @@ export function parseHardhatConfig(raw: string): SettingsPart {
   if (via) out.viaIR = via[1] === "true";
   const evm = /evmVersion\s*:\s*["']([A-Za-z0-9]+)["']/.exec(text);
   if (evm) out.evmVersion = evm[1].toLowerCase();
+  const ver = /solidity\s*:\s*["'](v?\d+\.\d+\.\d+)["']/.exec(text) ?? /\bversion\s*:\s*["'](v?\d+\.\d+\.\d+)["']/.exec(text);
+  if (ver) out.solcVersion = cleanSolcVersion(ver[1]);
+  const cbor = /appendCBOR\s*:\s*(true|false)/.exec(text);
+  if (cbor) out.cborMetadata = cbor[1] === "true";
+  const bh = /bytecodeHash\s*:\s*["']([A-Za-z0-9]+)["']/.exec(text);
+  if (bh) out.bytecodeHash = bh[1].toLowerCase();
   return out;
 }
 
@@ -122,7 +143,10 @@ export function settingsCandidates(version: string, parsed: SettingsPart | null)
   list.push(make(true, 200, false, null), make(false, 200, false, null));
   for (const runs of [1, 1000, 10000]) list.push(make(true, runs, false, null));
   for (const evm of ["paris", "london", "shanghai", "cancun"]) list.push(make(true, 200, false, evm));
-  list.push(make(true, 200, true, null)); // viaIR is by far the slowest, so it goes last
+  // size-optimised builds avoiding PUSH0 are common on this chain (code deposit is per byte)
+  list.push(make(true, 1, false, "paris"));
+  // viaIR is by far the slowest, so these go last
+  list.push(make(true, 200, true, null), make(true, 1, true, null), make(true, 1, true, "paris"), make(true, 200, true, "paris"));
   const seen = new Set<string>();
   return list.filter((c) => {
     const k = `${c.optimizer.enabled}|${c.optimizer.runs}|${c.viaIR}|${c.evmVersion}`;
@@ -134,4 +158,41 @@ export function settingsCandidates(version: string, parsed: SettingsPart | null)
 
 export function toCompilerSettings(version: string, c: Candidate): CompilerSettings {
   return { version, optimizer: { ...c.optimizer }, viaIR: c.viaIR, evmVersion: c.evmVersion };
+}
+
+// ---------- compiler version candidates for code that stores no metadata ----------
+
+export type VersionPick = { version: string; why: string };
+
+const COMMON = ["0.8.24", "0.8.20", "0.8.28", "0.8.30"];
+
+/**
+ * Up to 4 solc versions to try, in order: the repo's pinned version, an exact pragma version,
+ * the highest release the pragmas allow, then common versions the pragmas allow.
+ * rootPragmas: for every candidate source file, the pragma ranges across its import closure.
+ */
+export function candidateVersions(o: {
+  configVersion: string | null;
+  rootPragmas: string[][];
+  releases: string[]; // highest first
+  satisfies: (range: string, version: string) => boolean;
+}): VersionPick[] {
+  const have = new Set(o.releases);
+  const score = (v: string) => o.rootPragmas.filter((rs) => rs.every((r) => o.satisfies(r, v))).length;
+  const out: VersionPick[] = [];
+  const add = (version: string, why: string) => {
+    if (have.has(version) && !out.some((p) => p.version === version) && out.length < 4) out.push({ version, why });
+  };
+  if (o.configVersion) add(o.configVersion, "pinned in the repo's config");
+  const exact = new Map<string, number>();
+  for (const rs of o.rootPragmas) for (const r of rs) {
+    const m = /^=?\s*(\d+\.\d+\.\d+)$/.exec(r.trim());
+    if (m) exact.set(m[1], (exact.get(m[1]) ?? 0) + 1);
+  }
+  for (const [v] of [...exact.entries()].sort((a, b) => b[1] - a[1] || compareVersions(b[0], a[0]))) add(v, "exact version in the pragma");
+  const best = o.releases.length ? Math.max(...o.releases.map(score)) : 0;
+  const top = o.releases.find((v) => score(v) === best);
+  if (top && best > 0) add(top, "highest release the pragma allows");
+  for (const v of COMMON) if (best > 0 && score(v) === best) add(v, "common version the pragma allows");
+  return out;
 }

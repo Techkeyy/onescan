@@ -322,8 +322,8 @@ export function CheckView({ id }: { id: string }) {
             </p>
           </Stamp>
           <p className="mt-4 max-w-2xl">
-            A different commit may be the reason. Contracts are often deployed from an earlier or later version of the
-            repo than the one now on the default branch.
+            This is not an accusation. A different commit or unusual compiler settings can be the reason, so if you know
+            the commit it was deployed from, check that one.
           </p>
         </>
       )}

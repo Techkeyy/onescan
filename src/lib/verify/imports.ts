@@ -128,7 +128,13 @@ export function resolveImportPath(imp: string, importer: string, remaps: Remappi
 
 // ---------- git submodules ----------
 
-export type Submodule = { path: string; repo: string; branch: string | null };
+export type Submodule = {
+  path: string;
+  repo: string;
+  branch: string | null;
+  /** Commit the repo pins this submodule at (gitlink). undefined/null = not read. */
+  pin?: string | null;
+};
 
 export function parseGitmodules(text: string): Submodule[] {
   const out: Submodule[] = [];
@@ -187,12 +193,23 @@ export function cleanVersion(range: string): string | null {
   return m ? m[1] : null;
 }
 
+/** True when a package.json value pins one exact version ("4.9.6"), not a range ("^4.9.0", "*", ">=4"). */
+export function isExactVersion(range: string): boolean {
+  return /^=?v?\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(range.trim());
+}
+
+export type PackagePins = {
+  /** Version to fetch per package ("" = declared without a usable version). */
+  versions: Map<string, string>;
+  /** Packages whose version the repo really pinned: a lock file entry or an exact package.json version. */
+  pinned: Set<string>;
+};
+
 /** Versions: package-lock.json first, then package.json. Shallower files take priority. */
-export function collectPackageVersions(
-  files: { path: string; text: string }[],
-): Map<string, string> {
+export function collectPackagePins(files: { path: string; text: string }[]): PackagePins {
   const lock = new Map<string, string>();
   const pkg = new Map<string, string>();
+  const exact = new Set<string>();
   const sorted = [...files].sort((a, b) => a.path.split("/").length - b.path.split("/").length);
   for (const f of sorted) {
     let json: unknown;
@@ -211,27 +228,53 @@ export function collectPackageVersions(
       for (const field of ["dependencies", "devDependencies", "peerDependencies"]) {
         const d = j[field] as Record<string, string> | undefined;
         if (d) for (const [k, v] of Object.entries(d)) {
+          if (pkg.has(k)) continue;
           const c = typeof v === "string" ? cleanVersion(v) : null;
-          if (c && !pkg.has(k)) pkg.set(k, c);
-          else if (!pkg.has(k) && typeof v === "string") pkg.set(k, "");
+          if (c) { pkg.set(k, c); if (isExactVersion(v)) exact.add(k); }
+          else if (typeof v === "string") pkg.set(k, "");
         }
       }
     }
   }
-  const out = new Map<string, string>();
-  for (const [k, v] of pkg) out.set(k, v); // "" = declared but no exact version
-  for (const [k, v] of lock) out.set(k, v);
-  return out;
+  const versions = new Map<string, string>();
+  for (const [k, v] of pkg) versions.set(k, v); // "" = declared but no exact version
+  for (const [k, v] of lock) versions.set(k, v);
+  const pinned = new Set<string>([...lock.keys(), ...exact]);
+  return { versions, pinned };
 }
 
-/** URL to fetch a source unit that is not in the repo itself, or null when it cannot be one. */
-export function externalUrl(key: string, subs: Submodule[], versions: Map<string, string>): string | null {
+export function collectPackageVersions(files: { path: string; text: string }[]): Map<string, string> {
+  return collectPackagePins(files).versions;
+}
+
+export type ExternalSource = {
+  url: string;
+  /** Set when the fetched dependency is NOT known to be what the repo pinned: why. null = pinned. */
+  guess: string | null;
+};
+
+/**
+ * Where to fetch a source unit that is not in the repo itself, or null when it cannot be one,
+ * and whether the version fetched is the repo's pinned one.
+ */
+export function externalSource(
+  key: string,
+  subs: Submodule[],
+  versions: Map<string, string>,
+  pinnedPkgs: Set<string> = new Set(),
+): ExternalSource | null {
   for (const s of subs) {
     if (key.startsWith(s.path + "/")) {
       const rest = key.slice(s.path.length + 1);
       if (rest.split("/").some((x) => x === ".." || x === "." || x === "")) return null;
+      if (s.pin && /^[0-9a-f]{40}$/.test(s.pin)) {
+        return { url: `https://raw.githubusercontent.com/${s.repo}/${s.pin}/${rest}`, guess: null };
+      }
       const ref = s.branch ?? "HEAD";
-      return `https://raw.githubusercontent.com/${s.repo}/${ref}/${rest}`;
+      return {
+        url: `https://raw.githubusercontent.com/${s.repo}/${ref}/${rest}`,
+        guess: `${s.repo} (submodule ${s.path}) was read at ${ref} because its pinned commit could not be read`,
+      };
     }
   }
   let k = key;
@@ -241,5 +284,15 @@ export function externalUrl(key: string, subs: Submodule[], versions: Map<string
   if (!sp) return null;
   const v = versions.get(sp.pkg);
   const ver = v && /^[0-9A-Za-z.+-]+$/.test(v) ? v : "latest";
-  return `https://cdn.jsdelivr.net/npm/${sp.pkg}@${ver}/${sp.rest}`;
+  const guess = pinnedPkgs.has(sp.pkg)
+    ? null
+    : ver === "latest"
+      ? `${sp.pkg} was fetched as the latest version: neither the lock file nor package.json pins it`
+      : `${sp.pkg}@${ver} is a guess: package.json gives a range and there is no lock file entry`;
+  return { url: `https://cdn.jsdelivr.net/npm/${sp.pkg}@${ver}/${sp.rest}`, guess };
+}
+
+/** URL to fetch a source unit that is not in the repo itself, or null when it cannot be one. */
+export function externalUrl(key: string, subs: Submodule[], versions: Map<string, string>): string | null {
+  return externalSource(key, subs, versions)?.url ?? null;
 }

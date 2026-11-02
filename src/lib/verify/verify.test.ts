@@ -307,17 +307,18 @@ describe("settings", () => {
     expect(f).toMatchObject({ optimizer: true, runs: 1000, viaIR: false, evmVersion: "paris" });
     expect(f.remappings).toEqual(["@oz/=lib/oz/", "a/=b/"]);
     const h = parseHardhatConfig(`module.exports = { solidity: { version: "0.8.20", settings: { optimizer: { enabled: true, runs: 777 }, viaIR: true, evmVersion: 'shanghai' } } }`);
-    expect(h).toEqual({ optimizer: true, runs: 777, viaIR: true, evmVersion: "shanghai" });
+    expect(h).toEqual({ optimizer: true, runs: 777, viaIR: true, evmVersion: "shanghai", solcVersion: "0.8.20" });
     expect(parseHardhatConfig("require('x'); process.exit(1)")).toEqual({});
   });
   it("orders candidates: repo settings first, then the fixed ladder", () => {
     const labels = settingsCandidates("0.8.28", { optimizer: true, runs: 999 }).map((c) => c.label);
     expect(labels).toEqual([
       "optimizer 999", "optimizer 200", "optimizer off", "optimizer 1", "optimizer 1000", "optimizer 10000",
-      "optimizer 200, evm paris", "optimizer 200, evm london", "optimizer 200, evm shanghai", "optimizer 200, evm cancun", "optimizer 200, viaIR",
+      "optimizer 200, evm paris", "optimizer 200, evm london", "optimizer 200, evm shanghai", "optimizer 200, evm cancun", "optimizer 1, evm paris",
+      "optimizer 200, viaIR", "optimizer 1, viaIR", "optimizer 1, viaIR, evm paris", "optimizer 200, viaIR, evm paris",
     ]);
     // repo settings equal to a ladder entry are not tried twice
-    expect(settingsCandidates("0.8.28", { optimizer: true, runs: 200 })).toHaveLength(10);
+    expect(settingsCandidates("0.8.28", { optimizer: true, runs: 200 })).toHaveLength(14);
     // settings the compiler cannot accept are dropped
     const old = settingsCandidates("0.8.6", null).map((c) => c.label);
     expect(old).toEqual(["optimizer 200", "optimizer off", "optimizer 1", "optimizer 1000", "optimizer 10000"]);
