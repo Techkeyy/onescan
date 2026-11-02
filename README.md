@@ -137,15 +137,16 @@ You do not have to trust it: every proof page lists the steps to repeat the chec
 | Item | Value |
 | --- | --- |
 | Network | Portaldot V3 testnet, chain ID 420420777 |
-| `ProofRegistry` address | TBD |
-| Deployment tx hash | TBD |
-| Attester address | TBD |
+| `ProofRegistry` address | `0x2a643655e0c8bc41d0f535462b266ad36237dda1` |
+| Deployment tx hash | `0x657beae83fe86c825539a2ea7cce51f15876e69ddd19f543912721072539dd55` (block 291278) |
+| Attester address | `0xDc474EfaBB69fAe76c5201A986a06CDA3A696d26` |
 
-`ProofRegistry` is written and tested on a local chain only. It is not yet deployed on Portaldot, so no proof made by the running app has an on-chain record yet.
+Tested on the live testnet by simulating `record` against the deployed contract: the real code hash from the attester is accepted, and a wrong hash, a zero hash, a funded wallet with no code, and a stranger's call all revert with the contract's own errors.
+
+First record made by the running app: `Firzadf/nodescope` at `0xd48da7eff3264bdd51a86b873da9ff6997aae99c`, tx `0xa326887ff8493c4fb6b94bdc782f99f3cc1329f7e1ef4f8a15d46e05e10cf386`. The contract's stored hash equals the proof's runtime hash. Each record costs about 3.9 tPOT, so proofs made before the registry went live show no record until they are checked again.
 
 ## Limitations
 
-- `ProofRegistry` has not been deployed to Portaldot (see above). Until it is, proof pages show that a record is pending.
 - The account tools (map a 5... account for EVM use, or send tPOT to a MetaMask address) have not been tested with a real wallet.
 - EVM bytecode only. Contracts built for PolkaVM, and ink! contracts, are not verified.
 - A record on chain is OneScan's attestation, not a trustless proof. Anyone can reproduce the check.

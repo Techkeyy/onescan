@@ -7,7 +7,7 @@ Idea research: `C:\Users\HomePC\Desktop\skill\idea-research\portaldot-hacker-hou
 
 ## Authoritative status
 
-**BUILDING: INTEGRATION PROVEN on the public URL https://onescan.103-195-188-198.sslip.io. ProofRegistry not deployed and account tools not tested with a wallet: both wait on tPOT. Owner's address has 0 tPOT; organizer replied "ok" on 2026-11-02.**
+**BUILDING: INTEGRATION PROVEN on the public URL https://onescan.103-195-188-198.sslip.io. ProofRegistry LIVE on testnet at `0x2a643655e0c8bc41d0f535462b266ad36237dda1`, first real record confirmed 2026-11-02. Account tools not yet tested with a wallet: owner holds about 200 tPOT for that.**
 
 Update this line after every phase. Allowed words: BUILDING, COMPONENT PROVEN,
 INTEGRATION PROVEN, UAT READY, UAT PASS, RELEASE READY, SUBMISSION READY, FINISHED.
@@ -125,3 +125,7 @@ Reference wallet (owner's, public): `5DcritAN6VxWuzBKX7VoLqy8yotyyCA1AX1cSpH63So
 4. Put `REGISTRY_ADDRESS` and `ATTESTER_PRIVATE_KEY` in the server env file, restart only onescan. Do one real check and see Recorded on-chain. Existing proofs stay unrecorded unless re-run.
 5. Fill README's Testnet deployment table and the deck. Owner tests Map this account one step at a time.
 - 2026-11-02: demo film rendered and in the owner's review queue: 2:18, 1920x1080 at 30 fps, cedar voice. It contains no on-chain record because the registry is not deployed; add that shot and re-render once it is.
+
+- 2026-11-02: tPOT arrived. Owner's wallet `5Dcrit...tm8z` holds 500 tPOT (watcher, 10:32 local). Registry deployment and wallet test are unblocked; next step is the owner sending tPOT to the attester, then the steps above.
+- 2026-11-02: demo film v2 built and approved by the owner as the submission film (2026-11-02). `Desktop/demo videos/OneScan_Demo_V2.mp4`: new 120 BPM score, living background, recaptured footage. v1 kept as `OneScan_Demo_Final.mp4`, also `onescan-film/backup/`. Same voice and script; 138.000s, 4140 frames, no decode errors, -15.1 LUFS, peak -2.3 dBFS. Shake cause found: CDP screencast frames arrive out of timestamp order and capture kept arrival order. Fixed by sorting on timestamp and recording scrolls at quarter speed. A live check logged one heading change, so the product does not flip. Large back-and-forth jumps: 10 in v1, 0 in v2 apart from one crossfade at 2:00. Sound not judged by the director; the owner must listen.
+- 2026-11-02: ProofRegistry deployed from the attester (tx `0x657beae8...dd55`, block 291278; about 132.6 tPOT). On-chain simulations against the deployed contract: right hash accepted; wrong hash, zero hash, funded wallet and stranger revert with the right errors. Server env set (`/opt/onescan/onescan.env`, 600), only onescan restarted. Real check through the public API wrote record tx `0xa326887f...f386` for NodeScope; `recordedRuntimeHash` equals the proof's runtime hash; proof page shows "Recorded on-chain". Each record costs about 3.9 tPOT; attester had about 163 tPOT left, so about 41 more. When empty, new records fail visibly while proofs still work. Not backfilled: owner to choose.

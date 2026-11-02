@@ -112,7 +112,7 @@ Build output contains copies of every test. Tested: the per-file runs reported t
 
 - The public URL: not reachable from the audit machine at the time of the check.
 - Timings (5 s, 21 s, 93 s) and the PolkaVM and `EXTCODEHASH` results come from the director's production measurements, not from my runs.
-- The Fund panel, any on-chain record on Portaldot, and the registry on a live network. The registry is only tested on a local chain.
+- The Fund panel. The registry and on-chain records were deployed and tested on the Portaldot testnet after this audit (2026-11-02, see the README), so they were not part of this review.
 - F1 end to end through HTTP, hostile-contract memory use, and queue flooding.
 - Rendered-page XSS (see section 3).
 - Files I did not read line by line: the Stageshow kit (third-party), `graph.ts` internals, the UI components other than those grepped.
