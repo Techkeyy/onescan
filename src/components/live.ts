@@ -7,7 +7,8 @@ import { apiGet } from "./api";
 const EVERY_MS = 6000;
 
 // One poll for the whole page, however many components read it. Paused while the tab is hidden.
-let current: { pulse: Pulse | null; failed: boolean } = { pulse: null, failed: false };
+type Live = { pulse: Pulse | null; failed: boolean; history: number[] };
+let current: Live = { pulse: null, failed: false, history: [] };
 const listeners = new Set<() => void>();
 let timer: ReturnType<typeof setTimeout> | undefined;
 
@@ -16,7 +17,13 @@ async function tick() {
   if (listeners.size === 0) return;
   if (!document.hidden) {
     const r = await apiGet<Pulse>("/api/pulse");
-    current = r.ok ? { pulse: r.data, failed: false } : { pulse: current.pulse, failed: true };
+    if (r.ok) {
+      const block = r.data.block;
+      const seen = block !== null && block !== current.history.at(-1);
+      current = { pulse: r.data, failed: false, history: seen ? [...current.history, block].slice(-200) : current.history };
+    } else {
+      current = { ...current, failed: true };
+    }
     listeners.forEach((l) => l());
   }
   if (listeners.size > 0) timer = setTimeout(tick, EVERY_MS);
@@ -37,7 +44,7 @@ function subscribe(listener: () => void) {
   };
 }
 
-const EMPTY = { pulse: null, failed: false };
+const EMPTY: Live = { pulse: null, failed: false, history: [] };
 export function usePulse() {
   return useSyncExternalStore(
     subscribe,
