@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { liveStatus, normaliseAddress, normaliseRepo } from "./util";
+import { clientAddress, liveStatus, normaliseAddress, normaliseRepo } from "./util";
 
 const ADDR = "0xd48da7eff3264bdd51a86b873da9ff6997aae99c";
 const saved = process.env.EVM_RPC_URL;
@@ -29,5 +29,19 @@ describe("api util", () => {
     expect(normaliseAddress(ADDR)).toBe(ADDR);
     expect(normaliseAddress("0x12")).toBeNull();
     expect(normaliseAddress("5DcritAN6VxWuzBKX7VoLqy8yotyyCA1AX1cSpH63So9tm8z")).toBeNull();
+  });
+});
+
+describe("clientAddress", () => {
+  const h = (o: Record<string, string>) => new Headers(o);
+  it("believes the front door only with the right secret", () => {
+    const named = { "x-onescan-client": "1.1.1.1", "x-forwarded-for": "9.9.9.9" };
+    expect(clientAddress(h({ ...named, "x-onescan-proxy": "s3cret" }), "s3cret")).toBe("1.1.1.1");
+    expect(clientAddress(h({ ...named, "x-onescan-proxy": "wrong" }), "s3cret")).toBe("9.9.9.9");
+    expect(clientAddress(h(named), "s3cret")).toBe("9.9.9.9");
+  });
+  it("never trusts the header when no secret is configured", () => {
+    expect(clientAddress(h({ "x-onescan-client": "1.1.1.1", "x-onescan-proxy": "", "x-forwarded-for": "9.9.9.9" }), undefined)).toBe("9.9.9.9");
+    expect(clientAddress(h({ "x-onescan-client": "1.1.1.1", "x-onescan-proxy": "" }), "")).toBe("local");
   });
 });

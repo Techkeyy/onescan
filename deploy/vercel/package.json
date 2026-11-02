@@ -1,0 +1,7 @@
+{
+  "name": "onescan-front-door",
+  "private": true,
+  "dependencies": {
+    "@vercel/functions": "^3.1.0"
+  }
+}

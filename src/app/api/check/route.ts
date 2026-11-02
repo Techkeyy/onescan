@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { getJobs, QueueFullError } from "@/lib/jobs";
-import { json, normaliseAddress, normaliseCommit, normaliseRepo } from "../_lib/util";
+import { clientAddress, json, normaliseAddress, normaliseCommit, normaliseRepo } from "../_lib/util";
 import { rateLimit } from "../_lib/ratelimit";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 const MAX_BODY_BYTES = 4096;
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "local";
+  const ip = clientAddress(req.headers);
   const wait = rateLimit(ip);
   if (wait > 0) {
     return Response.json(

@@ -44,3 +44,13 @@ export async function liveStatus(
 export function json(body: unknown, status = 200) {
   return Response.json(body, { status, headers: { "cache-control": "no-store" } });
 }
+
+/**
+ * The address the rate limit counts. The public front door names the visitor, and is believed
+ * only when it also presents the shared secret, so nobody else can choose their own address.
+ */
+export function clientAddress(headers: Headers, secret = process.env.ONESCAN_PROXY_SECRET): string {
+  const named = headers.get("x-onescan-client");
+  if (secret && named && headers.get("x-onescan-proxy") === secret) return named;
+  return headers.get("x-forwarded-for")?.split(",")[0].trim() || "local";
+}

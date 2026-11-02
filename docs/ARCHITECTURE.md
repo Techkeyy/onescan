@@ -1,6 +1,6 @@
 # OneScan architecture
 
-OneScan is one Next.js process with a SQLite file. It has no indexer and no login. Every chain read is live.
+OneScan is one Next.js process with a SQLite file. It has no indexer and no login. Every chain read is live. The public address is a Vercel front door (`deploy/vercel`) that passes every request to that one process.
 
 ## Diagram
 
@@ -124,3 +124,4 @@ OneScan never sees a key for it.
 | `src/components/` | Pages and the wallet tools. Browser code imports types and `address.ts` only |
 | `src/components/stageshow-kit/` | Third-party drawing kit for the home illustration, see `NOTICE.md` |
 | `scripts/` | Make an attester key, deploy the registry (dry run by default) |
+| `deploy/vercel/` | The public address: passes requests to the server and names the visitor |

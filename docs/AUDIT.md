@@ -28,7 +28,7 @@ User input never chooses a host. A submodule `branch` containing `..` can change
 
 ### Rate limit depends on the proxy (low, by design)
 
-The limit trusts the first `X-Forwarded-For` entry, so the app must sit behind a proxy that overwrites it. Production does: spoofed values still hit the limit (tested). The README states this requirement for anyone deploying it.
+The limit trusts the first `X-Forwarded-For` entry, so the app must sit behind a proxy that overwrites it. Production does. The public address is a Vercel front door that names the visitor, and the server believes that name only with a shared secret. Faked headers still hit the limit through the front door and directly at the server, and a second visitor was unaffected when the first was limited (tested). The README states this requirement for anyone deploying it.
 
 ## 2. Found and fixed
 
@@ -69,11 +69,13 @@ The limit trusts the first `X-Forwarded-For` entry, so the app must sit behind a
 | Nothing from a repo is executed | Config is parsed as text, and the only dynamic load is the compiler | Reading and search |
 | XSS | No `dangerouslySetInnerHTML`, `eval` or `new Function` in app code, outside the third-party kit | Reading and search |
 | Reduced motion, phone width, light mode | No sideways overflow on 5 page types, and nothing animates under reduced motion | Tested in a real browser |
+| Public address end to end | Match, refusal, the 3-minute look-back, proofs, badge and account page all pass through the front door, with no page errors | Tested in a real browser |
 | Links in the README | Every link answered 200 | Tested |
 
 ## 5. Not verified
 
 - A first-time `mapAccount` with a real wallet. The test account was already mapped.
+- A wallet send through the Vercel address. It was tested on the server's own address, and the wallet talks directly to the Portaldot node.
 - Behaviour under a real flood, and memory use on a hostile contract.
 - The parser fix through the full HTTP path, because it would need publishing a hostile repo.
 - The third-party Stageshow kit was not read line by line.

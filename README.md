@@ -2,13 +2,13 @@
 
 Paste a GitHub repo and a Portaldot V3 contract address. OneScan rebuilds the code and tells you whether it is what is really running.
 
-**[Live app](https://onescan.103-195-188-198.sslip.io)** · **[Watch it refuse a false claim](https://onescan.103-195-188-198.sslip.io/check?repo=Gieez/portaldot-revivescope&address=0xd48da7eff3264bdd51a86b873da9ff6997aae99c&run=1)** · **[A real proof](https://onescan.103-195-188-198.sslip.io/proof/0xd48da7eff3264bdd51a86b873da9ff6997aae99c)** · [All proofs](https://onescan.103-195-188-198.sslip.io/proofs) · [API](docs/API.md) · [Architecture](docs/ARCHITECTURE.md) · [Audit](docs/AUDIT.md)
+**[Live app](https://onescan-portaldot.vercel.app)** · **[Watch it refuse a false claim](https://onescan-portaldot.vercel.app/check?repo=Gieez/portaldot-revivescope&address=0xd48da7eff3264bdd51a86b873da9ff6997aae99c&run=1)** · **[A real proof](https://onescan-portaldot.vercel.app/proof/0xd48da7eff3264bdd51a86b873da9ff6997aae99c)** · [All proofs](https://onescan-portaldot.vercel.app/proofs) · [API](docs/API.md) · [Architecture](docs/ARCHITECTURE.md) · [Audit](docs/AUDIT.md)
 
 For builders who want to prove a contract, and for judges, integrators and users who want to check someone else's. No wallet, no account.
 
 > *"This repo says it is the contract at that address. Is it?"*
 
-[![OneScan badge, read live from the chain](https://onescan.103-195-188-198.sslip.io/badge/0xd48da7eff3264bdd51a86b873da9ff6997aae99c)](https://onescan.103-195-188-198.sslip.io/proof/0xd48da7eff3264bdd51a86b873da9ff6997aae99c)
+[![OneScan badge, read live from the chain](https://onescan-portaldot.vercel.app/badge/0xd48da7eff3264bdd51a86b873da9ff6997aae99c)](https://onescan-portaldot.vercel.app/proof/0xd48da7eff3264bdd51a86b873da9ff6997aae99c)
 
 <sub>Built for Portaldot Hacker House 2026, track Node Operations & Tooling.</sub>
 
@@ -45,7 +45,7 @@ Sourcify and Etherscan solve this on other chains. In my GitHub searches I found
 
 ## Try it
 
-Open the [check page](https://onescan.103-195-188-198.sslip.io/check) and paste any of these. Times were measured on the production server, a single CPU, on 2026-11-02.
+Open the [check page](https://onescan-portaldot.vercel.app/check) and paste any of these. Times were measured on the production server, a single CPU, in November 2026.
 
 | Repo | Address | What you should see | Time |
 | --- | --- | --- | --- |
@@ -59,7 +59,7 @@ These are other builders' public repos, used as test inputs.
 From a terminal:
 
 ```bash
-curl -X POST https://onescan.103-195-188-198.sslip.io/api/check \
+curl -X POST https://onescan-portaldot.vercel.app/api/check \
   -H 'content-type: application/json' \
   -d '{"repo":"Firzadf/nodescope","address":"0xd48da7eff3264bdd51a86b873da9ff6997aae99c"}'
 # {"id":"..."}  then poll GET /api/check/<id> until state is matched, no_match or failed
@@ -87,7 +87,7 @@ I learned this the hard way. The first engine refused 4 pairs in real testing, a
 | Repo that does not exist | `repo_not_found` | production |
 | Hostile archive paths (`..`, absolute) | Skipped, nothing written outside the work folder | `verify.test.ts` |
 | Source files built to stall the parser | Found in my audit, fixed, linear time now | `parse-limits.test.ts` |
-| Spoofed `X-Forwarded-For` to dodge the rate limit | Still limited, the proxy overwrites it | production |
+| Faked visitor headers to dodge the rate limit | Still limited, through the front door and directly at the server | `util.test.ts`; production |
 | `ProofRegistry.record` with a wrong hash, a zero hash, a wallet with no code, or from a stranger | Reverts with the contract's own error | `forge test`; deployed contract, simulated |
 | Contract deployed from code that was never committed | Cannot match. Listed under limitations | n/a |
 
@@ -120,7 +120,7 @@ Five real projects are recorded so far, each with its stored hash checked agains
 
 ### Account page
 
-Portaldot gives one account two addresses, and that confused me as a user too. [Look up any address](https://onescan.103-195-188-198.sslip.io/#accounts) to see both forms and both balances. From there, your own wallet can **map** a 5... account so its balance works with 0x tools, or **send** tPOT to a MetaMask address. OneScan never sees a key.
+Portaldot gives one account two addresses, and that confused me as a user too. [Look up any address](https://onescan-portaldot.vercel.app/#accounts) to see both forms and both balances. From there, your own wallet can **map** a 5... account so its balance works with 0x tools, or **send** tPOT to a MetaMask address. OneScan never sees a key.
 
 ### What I learned building on V3
 
@@ -183,10 +183,11 @@ curl -X POST http://localhost:3000/api/check \
 | `ONESCAN_COMPILE_TIMEOUT_MS` | Time for one compile | 120000 |
 | `REGISTRY_ADDRESS`, `ATTESTER_PRIVATE_KEY` | Together enable on-chain records. Server only, in `.env.local` | unset: no records |
 | `NEXT_PUBLIC_REPO_URL` | Adds a source link to the footer | unset |
+| `ONESCAN_PROXY_SECRET` | Shared with the front door, so it can name the visitor | unset: `X-Forwarded-For` only |
 
 `node scripts/new-attester.mjs` makes an attester key and prints only the address. `scripts/deploy-registry.mjs` is a dry run unless you pass `--send`.
 
-To deploy, run `npm run build` and `npm start` behind a reverse proxy that overwrites `X-Forwarded-For`, because the rate limit of 10 checks per 10 minutes trusts that header. Allow outbound HTTPS to the RPC, `github.com`, `codeload.github.com`, `raw.githubusercontent.com`, `api.github.com`, `cdn.jsdelivr.net` and `binaries.soliditylang.org`.
+To deploy, run `npm run build` and `npm start` behind a reverse proxy that overwrites `X-Forwarded-For`, because the rate limit of 10 checks per 10 minutes trusts that header. The public address is a free Vercel front door ([deploy/vercel](deploy/vercel)) that passes every request to one server. It names the visitor to the rate limit, and the server believes it only with `ONESCAN_PROXY_SECRET`. Allow outbound HTTPS to the RPC, `github.com`, `codeload.github.com`, `raw.githubusercontent.com`, `api.github.com`, `cdn.jsdelivr.net` and `binaries.soliditylang.org`.
 
 </details>
 
