@@ -124,3 +124,4 @@ Reference wallet (owner's, public): `5DcritAN6VxWuzBKX7VoLqy8yotyyCA1AX1cSpH63So
 3. Test on testnet: wrong hash reverts, non-attester reverts, good record confirms.
 4. Put `REGISTRY_ADDRESS` and `ATTESTER_PRIVATE_KEY` in the server env file, restart only onescan. Do one real check and see Recorded on-chain. Existing proofs stay unrecorded unless re-run.
 5. Fill README's Testnet deployment table and the deck. Owner tests Map this account one step at a time.
+- 2026-11-02: demo film rendered and in the owner's review queue: 2:18, 1920x1080 at 30 fps, cedar voice. It contains no on-chain record because the registry is not deployed; add that shot and re-render once it is.
