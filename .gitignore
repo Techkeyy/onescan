@@ -45,6 +45,7 @@ next-env.d.ts
 /contracts/out
 /contracts/cache
 /contracts/lib
-/.claude/settings.local.json
-/director.private.md
+/.claude/
+/AGENTS.md
+/director*.md
 /submission

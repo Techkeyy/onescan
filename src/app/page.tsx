@@ -6,6 +6,7 @@ import { CommitTimeline } from "@/components/CommitTimeline";
 import { HeroSceneLoader } from "@/components/HeroSceneLoader";
 import { LiveStatus } from "@/components/LiveStatus";
 import { ProofLedger } from "@/components/ProofLedger";
+import { SearchBox } from "@/components/SearchBox";
 import { Coverage } from "@/components/Coverage";
 import { VerdictExplorer } from "@/components/VerdictExplorer";
 import { btnPrimary, btnSecondary } from "@/components/ui";
@@ -148,6 +149,21 @@ export default function Home() {
             </div>
           </div>
           <HeroSceneLoader />
+        </div>
+      </section>
+
+      <section id="accounts" className="block-slate">
+        <div className={`${wrap} reveal grid grid-cols-[minmax(0,1fr)] items-center gap-x-14 gap-y-6 py-14 lg:grid-cols-2 lg:py-20`}>
+          <div>
+            <h2 className={h2}>One account, two addresses</h2>
+            <p className="mt-4 max-w-xl text-lg">
+              Every Portaldot account has a 5... address and a 0x address. Look up either one to see both forms and both
+              balances. From there you can map the account, or send tPOT to a MetaMask address with your own wallet.
+            </p>
+          </div>
+          <div className="tokens-base print p-5" style={{ "--print-shadow": "#0000006b" } as React.CSSProperties}>
+            <SearchBox />
+          </div>
         </div>
       </section>
 

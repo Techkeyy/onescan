@@ -5,6 +5,8 @@ import { rateLimit } from "../_lib/ratelimit";
 
 export const dynamic = "force-dynamic";
 
+const MAX_BODY_BYTES = 4096;
+
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "local";
   const wait = rateLimit(ip);
@@ -13,6 +15,10 @@ export async function POST(req: NextRequest) {
       { error: "Too many checks from this address. Try again later." },
       { status: 429, headers: { "retry-after": String(wait), "cache-control": "no-store" } },
     );
+  }
+
+  if (Number(req.headers.get("content-length") ?? 0) > MAX_BODY_BYTES) {
+    return json({ error: "That request is too large." }, 413);
   }
 
   let body: Record<string, unknown>;

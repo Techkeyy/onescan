@@ -30,6 +30,9 @@ export function SiteHeader() {
               <Link href="/proofs" className={tab(false)}>
                 Proofs
               </Link>
+              <a href="#accounts" className={tab(false)}>
+                Accounts
+              </a>
             </nav>
             <Link href="/check" className={`${btnPrimary} ml-auto sm:ml-0`}>
               Check a contract

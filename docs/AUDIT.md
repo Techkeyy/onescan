@@ -1,122 +1,80 @@
 # OneScan audit
 
-Internal report, written for the maintainers. Method: the project-audit process (claims first, then hygiene, then trying to break it). Date: 2026-11-02. State audited: commit `bd22954` plus uncommitted working-tree changes.
+Date: 2026-11-02. Method: every factual claim in the documentation was treated as a test, then the repository was checked, then I tried to break the running app.
 
-"Tested" means I ran it against a local `next dev` server or ran the function directly. "By reading" means I did not exercise it.
+"Tested" means I ran it. "By reading" means I did not exercise it. Production means the live server.
 
-## 1. Wrong and matters
+## 1. Open, and worth knowing
 
-### F1. HIGH, fixed: three parsers stall the whole server on a crafted repo file
+### Queue can be occupied by one client (medium)
 
-Regexes that backtrack quadratically ran on the main thread over files from a user-chosen repo:
+Checks run one at a time, up to 300 s each, with 50 queued. The rate limit of 10 checks per 10 minutes per client slows this but does not stop someone using many addresses. Finished jobs are also never pruned. Not load-tested, to avoid hammering GitHub and the public testnet RPC.
 
-| Parser | File | Trigger |
-| --- | --- | --- |
-| `parseImports` | `src/lib/verify/imports.ts` | `import import import ...` |
-| `parsePragmas` | `src/lib/verify/pragma.ts` | `pragma solidity pragma solidity ...` |
-| `parseHardhatConfig` | `src/lib/verify/config.ts` | `optimizer: {optimizer: {...` with no `}` |
+### Public read routes are not rate limited (medium)
 
-Evidence (tested, direct calls): imports, 112 KB took 7.6 s and 256 KB took 45.8 s; pragma, 256 KB took 23 s; hardhat, 384 KB took 94 s. Time grows with the square of the size. The file limit is 2 MB, so one file means tens of minutes with the event loop blocked. A blocked loop also stops the timeouts that are meant to bound a check, and every route shares that process. Reach (by reading): anyone publishes a repo with such a file and posts it with any address that has EVM code with solc metadata. I could not publish a hostile repo, so the full HTTP path was not exercised.
+`/api/proof`, `/badge`, `/api/address` and `/api/preflight` each call the chain, and `/api/pulse` parses every stored proof, with its chain read cached for 4 s. A flood would reach the public testnet RPC from the server's address. Badges are embedded on other sites by design, so some load is expected.
 
-Fix (small, in `src/`): `parseImports` is now a single linear pass; `parsePragmas` and `parseHardhatConfig` cut the text after the last `;` or `}` so every attempt has a terminator ahead. A 60,000-case differential fuzz against the old regexes found no difference in output. At 2 MB the slowest case now takes about 1.6 s. Regression tests: `src/lib/verify/parse-limits.test.ts` (4 tests); the imports test fails on the old code (45.8 s). `verify.test.ts` (32 tests) still passes.
+### The compiler binary is trusted from one origin (low)
 
-### F2. MEDIUM: rate limit can be bypassed with `X-Forwarded-For`
+`compiler.ts` runs the downloaded `soljson` in a worker with full Node access. Its sha256 comes from a list on the same host, and the check is skipped if the list has no hash for a build. This stops corruption, not a compromised host.
 
-`src/app/api/check/route.ts` keys on the first entry of `x-forwarded-for`. Tested: 10 requests with no header, the 11th got 429. Twelve requests with a different header value each all passed the limiter. Behind a proxy that overwrites the header this is not exploitable; behind one that appends, or when the app port is reachable directly, it is. Without the header all callers share one bucket named `local`, so one caller can lock out the rest. The limiter also counts invalid requests. Decision for the director: confirm the proxy overwrites the header, and consider taking the last trusted hop.
+### Dependency advisories (low)
 
-### F3. MEDIUM: one client can occupy the queue for hours
+`npm audit` reports 18 advisories, 16 moderate and 2 high, all in dependency trees. The two high ones are `tmp`, pulled in by `solc`, through arguments OneScan never passes (by reading). The suggested fix downgrades `solc`, so it was not applied.
 
-Checks run one at a time, up to 300 s each, 50 queued. 50 slow jobs is about 4 hours. With F2 open there is no per-client cap that holds. Also the `jobs` table is never pruned. Not load-tested, to avoid hammering GitHub and the testnet RPC.
+### Outbound URLs from repo metadata (low)
 
-### F4. MEDIUM: public read routes are unmetered and each calls upstream services
+User input never chooses a host. A submodule `branch` containing `..` can change the path on `raw.githubusercontent.com`, and npm sub-paths can carry `?` and `%2e%2e` on jsDelivr (tested). Both stay on the same host, so this is not server-side request forgery.
 
-| Route | Work per request |
-| --- | --- |
-| `GET /api/proof/[address]` | live `eth_getCode`, a full-range `eth_getLogs`, and (first time) about 20 sequential `eth_getCode` calls |
-| `GET /badge/[address]` | one `eth_getCode` |
-| `GET /api/address/[address]` | EVM RPC plus Substrate WebSocket reads |
-| `GET /api/preflight/[address]` (new) | one `eth_getCode` |
-| `GET /api/pulse` (new) | block number (cached 4 s), and it parses every stored proof, source included, on each call |
+### Rate limit depends on the proxy (low, by design)
 
-Tested: `/api/proof` for a stored proof took 0.7 to 10 s under load. A flood would hit the public testnet RPC from the server's address, and `/api/pulse` gets slower as proofs accumulate. Badges are embedded on third-party pages by design, so some load is normal.
+The limit trusts the first `X-Forwarded-For` entry, so the app must sit behind a proxy that overwrites it. Production does: spoofed values still hit the limit (tested). The README states this requirement for anyone deploying it.
 
-### F5. MEDIUM (policy): a hosting alias is in public git history
+## 2. Found and fixed
 
-The string was added in `4015e2a` and removed in `8bed223`, and `origin/main` contains both. It is a name, not a credential. Removing it needs a history rewrite and a force push, which is the director's call. The current tree and `director.md` do not contain it. The secret scan found nothing else (section 3).
+| Finding | Severity | Fix | Evidence |
+| --- | --- | --- | --- |
+| Three parsers could stall the server on a crafted repo file. A 384 KB file took 94 s, and the file limit is 2 MB | High | Linear parsing. The slowest case at 2 MB is about 1.6 s, and a 60,000-case comparison with the old parsers found no change in output | `parse-limits.test.ts` |
+| All 4 early refusals on real contracts were false negatives | High | `no_match` now requires every setting, the pinned dependencies and every source file | `live`, `pins`, `oz` tests; 0 false `no_match` on 43 real pairs |
+| The wallet panel lost its result when the balances refreshed, so a successful send looked failed | Medium | The page stays mounted through a refresh | Browser test, then a real wallet |
+| The wallet panel gave up on the node after 12 s, but connections take 4 to 14 s, so it reported false outages | Medium | One shared connection, 45 s limit | Measured 5 connections; real wallet |
+| No security headers | Low | `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` | `curl -I` on production |
+| No body limit on `POST /api/check` | Low | Over 4 KB is answered 413 | Tested on a clean copy |
+| `npm test` ran tests twice when build output existed | Low | `.next` excluded in `vitest.config.ts` | 14 files reported after a build |
+| README timing and test counts had gone stale | Low | Rewritten from today's runs | This audit |
+| The account page was hard to find from the landing page | UX | Landing section and an Accounts link | Reported by a real user |
 
-### F6. LOW: no security headers
+## 3. Noted, not a problem
 
-Tested with `curl -I` on `/`: no `Content-Security-Policy`, `X-Frame-Options` or `frame-ancestors`, `X-Content-Type-Options` or `Referrer-Policy`. The Fund panel could be framed by another site. A wallet prompt would still show the transaction, so impact is low. Add them in the proxy or `next.config.ts` (not changed by me).
+- The three private keys in `attest.test.ts` are Foundry's public `anvil` keys, used on a local chain only.
+- `ProofRegistry.record` lets the attester overwrite an earlier record for the same target. This is intended and covered by `test_ReRecordingUpdates`.
+- Re-checking a contract that already has a record keeps that record and spends nothing. Tested: 2 recorded proofs re-checked, balance and record count unchanged.
+- A short server alias from early setup is in old commits. It is a name, not a credential, and it was removed from the current files.
 
-### F7. LOW: the solc binary is run on trust from one origin
-
-`compiler.ts` loads the downloaded `soljson-*.js` into a worker thread that has full Node access. The sha256 comes from `list.json` on the same host, and the check is skipped when the list has no hash for a build. It stops corruption, not a compromised host. Worker heap is capped at 2 GB, which is a lot on a shared server (peak measured by the director: 439 MB for a large project; a hostile contract was not tried).
-
-### F8. LOW: outbound hosts are more than the two the design names
-
-User input never chooses a host. Hosts reached: `github.com`, `codeload.github.com`, `raw.githubusercontent.com`, `api.github.com`, `cdn.jsdelivr.net`, `binaries.soliditylang.org`, and the configured RPC. Details:
-
-- A submodule `branch` from `.gitmodules` may contain `..` (tested): `lib/x/a.sol` became `https://raw.githubusercontent.com/o/r/../../../evil/a.sol`, which resolves to another path on the same host. Not SSRF, but the ref is not confined to one segment.
-- npm sub-paths accept `?`, `#` and `%2e%2e` (tested) on the jsDelivr host.
-- The archive redirect host is checked after the redirect is followed (`github.ts`).
-- `fetchTextOrNull` reads the whole body before applying its 5 MB cap.
-
-### F9. LOW: no request body limit on `POST /api/check`
-
-A 3 MB body was read and parsed, then answered 400 (tested). Not a 413.
-
-### F10. LOW: `npm test` double-runs when `.next/standalone` exists
-
-Build output contains copies of every test. Tested: the per-file runs reported two files each, and the two copies of `attest.test.ts` collided on one port, so one failed. A clean clone is fine (9 files, 70 tests passed before my test file was added). A `vitest.config` that excludes `.next` would fix it; it is outside what I may change. The same folder holds `data/onescan.db`, a copy of the local database, so do not copy `.next/standalone` to a server whole.
-
-### F11. LOW: dependency advisories
-
-`npm audit`: 18 findings (16 moderate, 2 high). The two high ones are `tmp` pulled in by `solc` (path traversal through its prefix/template arguments). By reading, OneScan never calls `tmp`; the suggested fix downgrades `solc`. Not changed.
-
-### F12. LOW: two data-folder variables
-
-`DATA_DIR` (database) and `ONESCAN_DATA_DIR` (compiler cache) are separate. Setting only one splits state. Documented in the README.
-
-### F13. Repository facts for the submission
-
-- No `LICENSE` file at the repository root. The README says so.
-- All 13 commits are dated 2026-11-01 to 2026-11-02. The event wants 3 or more commits and core modules not all in the final day; the director should check that rule against this history.
-- `director.md` is tracked and public.
-
-## 2. Wrong and does not matter much
-
-- The three keys in the history are Foundry's public anvil keys, used only by local tests. Anything sent to them on a real chain would be taken by others.
-- Error text from an unexpected exception is returned in a job's `failure.detail` and shown in the UI. I could not trigger one that carries a server path, so this is by reading only.
-- `ProofRegistry.record` lets the attester overwrite an earlier record for the same target. Intended; the test `test_ReRecordingUpdates` covers it.
-
-## 3. Verified
+## 4. Verified
 
 | Check | Result | How |
 | --- | --- | --- |
-| Secret scan of all history (`git log --all -p`, 13 commits) | No private-key headers, token shapes, `.env`, `.pem`, database or private-notes file ever tracked. Four 64-hex strings: three are anvil keys, one is a transaction hash | tested |
-| `.gitignore` | Covers `.env*` (checked `.env.local`, `.env.production`), `/data`, `/director.private.md`, `/contracts/out` | `git check-ignore` |
-| Private key in the browser bundle | No match for `ATTESTER_PRIVATE_KEY`, `privateKeyToAccount`, `REGISTRY_ADDRESS`, `DEPLOYER_PRIVATE_KEY` or `writeContract` in 39 files of `.next/static` and 243 of `.next/dev/static`. Client components import only types and `lib/address.ts`. Only `NEXT_PUBLIC_NATIVE_WS_URL` and `NEXT_PUBLIC_REPO_URL` are public | tested, plus reading |
-| Repo input | `https://evil.com/..`, `http://`, userinfo URL, `..`, query strings, newlines, arrays, numbers: all 400 | tested |
-| Commit input | `a..b`, `--upload-pack=x`, `../../x`, 200 characters: all 400 | tested |
-| Address input | Non-0x, markup, `%ZZ`: 400 | tested |
-| Tar extraction | `..`, absolute, drive-letter, symlink and hard-link entries wrote nothing outside the work folder; files over 2 MB are reported as skipped; `node_modules` skipped | tested with a hand-built archive |
-| XSS | No `dangerouslySetInnerHTML`, `innerHTML`, `eval` or `new Function` in app code. Repo, file, contract and error strings render as React text. The badge uses fixed strings plus a validated address. A stored proof with `<img onerror>` in file, contract and source came back from the API as inert JSON | reading, grep, API round trip. Not confirmed in a rendered page: the shared browser pane was navigated elsewhere by another party and the dev page never hydrated |
-| Other users' data | No accounts. Job ids are random UUIDs. Proofs are public by design. `/api/proofs` omits source and ABI | reading, tested |
-| Nothing from a repo is executed | Config is parsed as text; the only dynamic load is the solc wrapper in the worker | grep for `child_process`, `exec`, `vm` |
-| Type check and lint | `tsc --noEmit` and `eslint` exit 0 | tested |
-| Tests | 10 files, 74 tests passed (389 s); `forge test` 8 passed (cached build) | tested |
-| `npm run build` then `npm start` | Build exit 0, server answered 200, from a fresh clone | tested |
-| Repo size | `.git` 1.5 MB; no large blobs in history | tested |
+| Secrets in all history | The attester key and API keys appear in no commit. No key shapes, `.env` files or databases were ever tracked | Tested, searched by exact value and by pattern |
+| Private key in the browser bundle | Client code imports only types and `address.ts`. Only two `NEXT_PUBLIC_` values are exposed | Tested at an earlier commit, plus reading |
+| Clean copy of the tracked files | `npm ci`, `npm run build`, `npm start` work, and the README's `curl` check returned `matched` | Tested |
+| Tests | 14 files, 106 of 106 passed in about 10 minutes, of which 84 are the check engine. `forge test` 8 of 8 | Tested on the clean copy |
+| Lint | `eslint` reports no errors or warnings | Tested |
+| Documented checks on production | `exact` in 3 s, refusal in 34 s, look-back in 173 s, PolkaVM, no code and missing repo all correct | Tested |
+| Registry on the live testnet | Right hash accepted; wrong hash, zero hash, wallet and stranger revert | Simulated against the deployed contract |
+| 5 on-chain records | Each stored hash equals the hash of the live code | Read from the chain |
+| Sending tPOT with a real wallet | 5 and 1 tPOT moved, exact amounts confirmed on-chain | Tested with SubWallet |
+| Repo input | URLs to other hosts, `..`, query strings and newlines answer 400 | Tested at an earlier commit |
+| Archive extraction | `..`, absolute, symlink and hard-link entries write nothing outside the work folder | Tested with a hand-built archive |
+| Nothing from a repo is executed | Config is parsed as text, and the only dynamic load is the compiler | Reading and search |
+| XSS | No `dangerouslySetInnerHTML`, `eval` or `new Function` in app code, outside the third-party kit | Reading and search |
+| Reduced motion, phone width, light mode | No sideways overflow on 5 page types, and nothing animates under reduced motion | Tested in a real browser |
+| Links in the README | Every link answered 200 | Tested |
 
-## 4. Not verified
+## 5. Not verified
 
-- The public URL: not reachable from the audit machine at the time of the check.
-- Timings (5 s, 21 s, 93 s) and the PolkaVM and `EXTCODEHASH` results come from the director's production measurements, not from my runs.
-- The Fund panel. The registry and on-chain records were deployed and tested on the Portaldot testnet after this audit (2026-11-02, see the README), so they were not part of this review.
-- F1 end to end through HTTP, hostile-contract memory use, and queue flooding.
-- Rendered-page XSS (see section 3).
-- Files I did not read line by line: the Stageshow kit (third-party), `graph.ts` internals, the UI components other than those grepped.
-
-## 5. What this audit changed
-
-Only these files under `src/`: `src/lib/verify/imports.ts`, `pragma.ts`, `config.ts` (F1) and the new `src/lib/verify/parse-limits.test.ts`. Documentation: `README.md`, `NOTICE.md`, `docs/ARCHITECTURE.md`, `docs/API.md` (added `/api/pulse` and `/api/preflight/[address]`), and this file. Nothing was committed.
+- A first-time `mapAccount` with a real wallet. The test account was already mapped.
+- Behaviour under a real flood, and memory use on a hostile contract.
+- The parser fix through the full HTTP path, because it would need publishing a hostile repo.
+- The third-party Stageshow kit was not read line by line.
+- Rendered-page XSS with a hostile stored proof was tested through the API only.

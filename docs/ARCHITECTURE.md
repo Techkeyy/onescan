@@ -34,7 +34,7 @@ flowchart TB
     solc["binaries.soliditylang.org<br/>solc releases, sha256 checked"]
   end
 
-  wallet["User's Substrate wallet<br/>(Fund panel, runs in the browser)"]
+  wallet["User's Substrate wallet<br/>(wallet tools, run in the browser)"]
 
   user --> api
   api --> rl --> jobs
@@ -49,7 +49,7 @@ flowchart TB
   api -- "proof page re-checks live code" --> rpc
   api --> node
   api <--> db
-  wallet -- "signs a native transfer" --> node
+  wallet -- "signs a transfer or mapping" --> node
 ```
 
 ## The same thing in plain text
@@ -81,7 +81,7 @@ Next.js API routes -- rate limit (10 / 10 min / client IP) --> Job queue (one at
   +-- GET /api/proof, /badge: read the stored proof, re-read live code, compare hashes
   +-- GET /api/address: Substrate node + EVM RPC (balances, 5... <-> 0x mapping)
 
-Fund panel (browser): the user's own Substrate wallet signs a native transfer to the node.
+Wallet tools (browser): the user's own Substrate wallet signs a transfer or a mapping to the node.
 OneScan never sees a key for it.
 ```
 
@@ -121,6 +121,6 @@ OneScan never sees a key for it.
 | `src/lib/address.ts` | 5... and 0x address conversion |
 | `src/lib/attest.ts` | Sends the record transaction (server only, holds the key) |
 | `contracts/ProofRegistry.sol` | Stores a record only if it matches live code |
-| `src/components/` | Pages and the Fund panel. Browser code imports types and `address.ts` only |
+| `src/components/` | Pages and the wallet tools. Browser code imports types and `address.ts` only |
 | `src/components/stageshow-kit/` | Third-party drawing kit for the home illustration, see `NOTICE.md` |
 | `scripts/` | Make an attester key, deploy the registry (dry run by default) |

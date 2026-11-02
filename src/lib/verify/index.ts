@@ -496,7 +496,6 @@ async function verifyOnce(input: VerifyInput, ctx: Ctx): Promise<VerifyResult> {
     emit("compiler", "done", `No compiler version stored in the code; will try ${picks.map((p) => `solc ${p.version}`).join(", ")}`);
     const results: Attempt[] = [];
     let totalTried = 0;
-    let totalCombos = 0;
     let pinnedDone: string | null = null;
     for (const p of picks) {
       if (Date.now() >= deadline) break;
@@ -505,7 +504,6 @@ async function verifyOnce(input: VerifyInput, ctx: Ctx): Promise<VerifyResult> {
       const a = await attempt(p.version, label);
       results.push(a);
       totalTried += a.tried - a.timedOut;
-      totalCombos += a.total;
       if (a.found) {
         emit("compiler", "done", `solc ${p.version} (${p.why}) reproduces the deployed code`);
         return matched(a);

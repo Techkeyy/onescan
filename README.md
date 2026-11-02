@@ -1,22 +1,22 @@
 # OneScan
 
-OneScan checks whether a public GitHub repo is the code running at a contract address on Portaldot V3, and gives a verdict anyone can recheck.
+Paste a GitHub repo and a Portaldot V3 contract address. OneScan rebuilds the code and tells you whether it is what is really running.
 
-**[Live app](https://onescan.103-195-188-198.sslip.io)** · **[Source](https://github.com/Techkeyy/onescan)** · [API](docs/API.md) · [Architecture](docs/ARCHITECTURE.md) · [Audit](docs/AUDIT.md) · [Third-party notices](NOTICE.md)
+**[Live app](https://onescan.103-195-188-198.sslip.io)** · **[Watch it refuse a false claim](https://onescan.103-195-188-198.sslip.io/check?repo=Gieez/portaldot-revivescope&address=0xd48da7eff3264bdd51a86b873da9ff6997aae99c&run=1)** · **[A real proof](https://onescan.103-195-188-198.sslip.io/proof/0xd48da7eff3264bdd51a86b873da9ff6997aae99c)** · [All proofs](https://onescan.103-195-188-198.sslip.io/proofs) · [API](docs/API.md) · [Architecture](docs/ARCHITECTURE.md) · [Audit](docs/AUDIT.md)
 
-For builders who want to prove a contract, and for judges, integrators and users who want to check someone else's. No account, no wallet.
+For builders who want to prove a contract, and for judges, integrators and users who want to check someone else's. No wallet, no account.
 
 > *"This repo says it is the contract at that address. Is it?"*
 
-Built for Portaldot Hacker House 2026, track Node Operations & Tooling.
+[![OneScan badge, read live from the chain](https://onescan.103-195-188-198.sslip.io/badge/0xd48da7eff3264bdd51a86b873da9ff6997aae99c)](https://onescan.103-195-188-198.sslip.io/proof/0xd48da7eff3264bdd51a86b873da9ff6997aae99c)
+
+<sub>Built for Portaldot Hacker House 2026, track Node Operations & Tooling.</sub>
 
 ## Why this exists
 
-On Portaldot V3 anyone can put a GitHub link next to a contract address. Nothing on the chain shows that the code in the repo is the code that is running.
+On Portaldot V3, anyone can put a GitHub link next to a contract address. The chain stores only compiled bytes, so nothing shows that the repo is the code that is running. A judge, an integrator and a user all have to take it on trust.
 
-Verification services exist on other chains. Sourcify and Etherscan check source against deployed bytecode there. OneScan does the same kind of check for Portaldot V3 testnet EVM contracts.
-
-OneScan is not an explorer. For blocks, transactions and address lookups on this chain, use [Pindex](https://github.com/youthisguy/portalIndex). OneScan answers one question: does this repo match this address.
+Sourcify and Etherscan solve this on other chains. In my GitHub searches I found nothing doing it for Portaldot V3 EVM contracts, which is the gap OneScan fills. It is not an explorer: for blocks and transactions, use [Pindex](https://github.com/youthisguy/portalIndex) or the [node console](https://node-console.portaldot.dev/). OneScan answers one question.
 
 ```
    repo + commit                                  contract address
@@ -25,192 +25,192 @@ OneScan is not an explorer. For blocks, transactions and address lookups on this
    solc version the chain's                      Portaldot V3 EVM RPC
    bytecode names in its metadata                        |
         |                                                |
-        +---- strip metadata, mask immutables ----------+
+        +---- strip metadata, mask immutables -----------+
                               |
-                  same?  yes: proof page, badge, optional on-chain record
+                  same?  yes: public proof, badge, on-chain record
                          no:  refused, never listed
 ```
 
 ## What it does
 
-1. **Reads** the code at the address (`eth_getCode`). Empty code and PolkaVM code are reported as such, not verified.
+1. **Reads** the code at the address with `eth_getCode`. Empty code and PolkaVM code are reported as such, not verified.
 2. **Reads** the solc version from the CBOR metadata at the end of the bytecode.
-3. **Fetches** the repo at a commit over GitHub's git protocol and tarball, extracting only Solidity and build config files. Branches and tags resolve to a full commit first.
-4. **Resolves** imports from the repo, from git submodules, and from npm packages (versions taken from `package-lock.json`, then `package.json`). Config in `foundry.toml`, `remappings.txt` and `hardhat.config.*` is read as text. Nothing from the repo is ever executed.
-5. **Compiles** with the exact solc release, in a worker thread with a timeout. The repo's own optimizer settings are tried first, then a fixed ladder of common settings.
-6. **Compares** runtime bytecode with the metadata hash stripped and immutable values masked. Identical including metadata is an `exact` match. Identical otherwise is a `code` match.
-7. **Says "no match" only if every combination was tried.** A timeout is `inconclusive` and an outage is `unavailable`. Neither is a verdict against the repo.
-8. **Falls back** to the repo's last commit before the contract was deployed, when the branch you gave no longer matches because the code changed afterwards.
-9. **Stores** a match as a public proof page and a README badge. Failed checks are never listed. Each time the proof page or badge is opened, the stored hash is compared with the live bytecode again.
-10. **Records** the match on the `ProofRegistry` contract when a registry and attester key are configured. The registry reverts unless the target's `EXTCODEHASH` equals the hash being recorded.
+3. **Fetches** the repo at one exact commit, extracting only Solidity and build config files.
+4. **Resolves** imports from the repo, git submodules and npm packages. Build config is read as text. **Nothing from the repo is ever executed.**
+5. **Compiles** with that exact solc release in a worker thread with a timeout, trying the repo's own settings first and then a ladder of common ones.
+6. **Compares** runtime bytecode with immutables masked. Identical including the metadata hash is an `exact` match. Identical apart from metadata is a `code` match.
+7. **Looks back** to the repo's last commit before deployment when the branch you gave no longer matches, because repos move on after they deploy.
+8. **Publishes** a match as a proof page and a README badge. Both compare the stored hash with the live code again each time they are opened, and the badge stops saying it matches if the code changes.
+9. **Records** the match on the `ProofRegistry` contract, which reverts unless the target's `EXTCODEHASH` equals the recorded hash.
 
-## Try it in 60 seconds
+## Try it
 
-Open the live app and press "Watch it refuse a false claim" on the landing page, or open the Check page (`/check`) and paste these.
+Open the [check page](https://onescan.103-195-188-198.sslip.io/check) and paste any of these. Times were measured on the production server, a single CPU, on 2026-11-02.
 
-| # | Repo | Address | What you should see |
+| Repo | Address | What you should see | Time |
 | --- | --- | --- | --- |
-| 1 | `Firzadf/nodescope` | `0xd48da7eff3264bdd51a86b873da9ff6997aae99c` | Exact match. 5 seconds on the production server. |
-| 2 | `Gieez/portaldot-revivescope` | `0xd48da7eff3264bdd51a86b873da9ff6997aae99c` | Refused: a real repo, but not the code at NodeScope's address. 32 seconds, because every settings combination is tried before saying no. |
-| 3 | `Rohitamalraj/DotProof` | `0x7e3444c1f9dbd53dea5ebc8160522b154857566b` | Fails at the default branch, then matches exactly at the repo's last commit before deployment, because the code changed after it was deployed. 93 seconds. |
+| `Firzadf/nodescope` | `0xd48da7eff3264bdd51a86b873da9ff6997aae99c` | Exact match | 3 s |
+| `Gieez/portaldot-revivescope` | `0xd48da7eff3264bdd51a86b873da9ff6997aae99c` | Refused: a real repo that compiles, but is not this contract. Every setting runs before it says no | 34 s |
+| `Rohitamalraj/DotProof` | `0x7e3444c1f9dbd53dea5ebc8160522b154857566b` | Fails on the default branch, then matches at the last commit before deployment | 173 s |
+| `Firzadf/nodescope` | `0xeebc363c7af7ed8e888da07e959043517ae4b97d` | PolkaVM contract: unsupported, not guessed at | under 1 s |
 
-These are other builders' public repos, used as test inputs. Example 3 is slower than 60 seconds; it is there because it shows the fallback.
+These are other builders' public repos, used as test inputs.
 
-A PolkaVM contract (`0xeebc363c7af7ed8e888da07e959043517ae4b97d`) is reported as unsupported rather than guessed at.
-
-The same check from a terminal:
+From a terminal:
 
 ```bash
-curl -X POST http://localhost:3000/api/check \
+curl -X POST https://onescan.103-195-188-198.sslip.io/api/check \
   -H 'content-type: application/json' \
   -d '{"repo":"Firzadf/nodescope","address":"0xd48da7eff3264bdd51a86b873da9ff6997aae99c"}'
-# {"id":"..."}   then poll GET /api/check/<id> until state is matched, no_match or failed
+# {"id":"..."}  then poll GET /api/check/<id> until state is matched, no_match or failed
 ```
 
-## Run it locally
+## Why a refusal is the feature
 
-Needs Node 22.13 or later (the store uses `node:sqlite`; developed on Node 24, running on Node 22 in production) and network access to the Portaldot V3 testnet RPC, GitHub, and the Solidity compiler binaries.
+A verifier that says "yes" is easy to build. OneScan is built around when it is allowed to say no.
 
-```bash
-npm install
-npm run dev          # http://localhost:3000
-npm test             # vitest
-```
+**A mismatch, a timeout and an outage are three different answers, and only a completed comparison can say "no".** "Does not match" requires that every settings combination ran, on the dependencies the repo pinned, with every source file built. Anything less is reported as unable to finish, never as a verdict against the repo.
 
-No environment variable is required to run. These are read by the code, all optional:
-
-| Variable | Used for | Default |
-| --- | --- | --- |
-| `EVM_RPC_URL` | EVM JSON-RPC | `https://test-evm-rpc-v3.portaldot.dev` |
-| `NATIVE_WS_URL` | Substrate node for the address page | `wss://test-node-v3.portaldot.dev` |
-| `NEXT_PUBLIC_NATIVE_WS_URL` | Same, for the Fund panel in the browser | same as above |
-| `DATA_DIR` | SQLite database (proofs, jobs) | `./data` |
-| `ONESCAN_DATA_DIR` | Downloaded solc binaries cache | `./data` |
-| `GITHUB_TOKEN` | Raises the GitHub API limit for the "commit before deployment" lookup | unset |
-| `ONESCAN_VERIFY_BUDGET_MS` | Total time for one check | 300000 |
-| `ONESCAN_COMPILE_TIMEOUT_MS` | Time for one compile | 120000 |
-| `REGISTRY_ADDRESS`, `ATTESTER_PRIVATE_KEY` | Together enable on-chain records. Server only. Put them in `.env.local`, which is git-ignored | unset: records are skipped |
-| `NEXT_PUBLIC_REPO_URL` | Adds a "Source code" link in the footer | unset |
-
-`DATA_DIR` and `ONESCAN_DATA_DIR` are separate variables; set both to the same folder.
-
-To make an attester key without printing it, run `node scripts/new-attester.mjs` (prints only the address). `scripts/deploy-registry.mjs` is a dry run unless you pass `--send`.
-
-### Tests
-
-| Suite | Command | Result |
-| --- | --- | --- |
-| TypeScript | `npm test` | 14 files, 106 tests, all passed, in 16 minutes |
-| Solidity | `forge test` in `contracts/` | 8 tests, all passed |
-
-Includes 79 tests of the check engine, with live runs against the real chain, GitHub and compiler.
-
-`live.test.ts` and `oz.test.ts` call the real testnet RPC, GitHub and the compiler binaries, which is why the run is slow. `attest.test.ts` starts a local `anvil` (from Foundry), so it needs Foundry on your PATH. It never contacts Portaldot.
+I learned this the hard way. The first engine refused 4 pairs in real testing, and all 4 were real matches, missed because of untried settings or code changed after deployment. Those false negatives are why the rule exists.
 
 ## How I tried to break it
 
 | Input | Result | Where it is exercised |
 | --- | --- | --- |
-| Right repo, right address | `exact` match | `live.test.ts`; production server, 5 s |
-| Real repo, wrong address (both directions) | `no_match` | `live.test.ts`; production server, 32 s |
-| Code changed after deployment | Default branch fails, exact match at the last commit before deployment | `oz.test.ts`; production server, 93 s |
-| A budget too small to finish a real match | `inconclusive`, never `no_match` | `live.test.ts` |
-| PolkaVM contract | `not_evm`, unsupported | `live.test.ts` |
-| Address with no code | `no_code` | `live.test.ts` |
-| Hostile archive paths (`..`, absolute) | Skipped, nothing written outside the work folder | `verify.test.ts`. Symlink and hard-link entries were also tried by hand, see [the audit](docs/AUDIT.md) |
-| Source files built to stall the parser | Found by the audit, fixed, linear time now | [the audit](docs/AUDIT.md) |
-| `ProofRegistry.record` with a wrong hash, a zero hash, a funded wallet with no code, or from a stranger | Reverts | `forge test` |
+| Right repo, right address | `exact` match | `live.test.ts`; production |
+| Real repo, wrong address, both directions | `no_match` | `live.test.ts`; production |
+| Code changed after deployment | Fails on the branch, matches at the last commit before deployment | `oz.test.ts`; production |
+| Metadata stripped from the deployed code | `code` match using the compiler the repo names, or unable to finish, never `no_match` | `nometa.test.ts`, `nometa-unit.test.ts` |
+| Budget too small to finish a real match | `inconclusive`, never `no_match` | `live.test.ts` |
+| PolkaVM contract | `not_evm`, unsupported | `live.test.ts`; production |
+| Address with no code, or a funded wallet | `no_code` | `live.test.ts`; production |
+| Repo that does not exist | `repo_not_found` | production |
+| Hostile archive paths (`..`, absolute) | Skipped, nothing written outside the work folder | `verify.test.ts` |
+| Source files built to stall the parser | Found in my audit, fixed, linear time now | `parse-limits.test.ts` |
+| Spoofed `X-Forwarded-For` to dodge the rate limit | Still limited, the proxy overwrites it | production |
+| `ProofRegistry.record` with a wrong hash, a zero hash, a wallet with no code, or from a stranger | Reverts with the contract's own error | `forge test`; deployed contract, simulated |
 | Contract deployed from code that was never committed | Cannot match. Listed under limitations | n/a |
 
-**A mismatch, a timeout and an outage are three different answers, and only a completed comparison can say "no".**
+Real repos checked against other teams' contracts never matched in any test run.
 
-The registry's rule is enforced by the contract: it reads `EXTCODEHASH` of the target and reverts if it does not equal the hash passed in. That is the one hard guarantee on chain. Who is allowed to write is also enforced (`onlyAttester`), and that part is a trust choice, described next.
+## Results on real contracts
 
-## What an on-chain record means
+A read-only scan at block 284,796 found 132 contracts deployed directly on the EVM side of Portaldot V3. I ran OneScan over 43 repo and contract pairs found in public Hacker House repos, through the public site. They are listed in [docs/coverage-candidates.json](docs/coverage-candidates.json), where two addresses appear twice because two repos name them.
 
-An on-chain record means OneScan's checker attested that the repo matches the contract. It is not trustless. OneScan holds the attester key. What the contract does enforce is that the recorded hash is the hash of code that is live at that address.
+| Result | Count | Notes |
+| --- | --- | --- |
+| Matched | 40 | Public proof pages |
+| Does not match | 0 | No pair in the list was a false claim. Refusals are tested separately, above |
+| No verdict | 3 | Two appear hand-written in Yul and one repo has no Solidity. OneScan says so instead of guessing |
 
-You do not have to trust it: every proof page lists the steps to repeat the check yourself with `git`, `solc` and one `eth_getCode` call.
+With 2 proofs from earlier test runs, that makes 42 public proofs across 32 repos, covering 32 of the 132 direct deployments. The landing page shows the live count. I have not measured adoption: these contracts were checked from public repos, and their teams have not been asked to use OneScan yet.
 
-## Testnet deployment
+## On Portaldot
 
 | Item | Value |
 | --- | --- |
 | Network | Portaldot V3 testnet, chain ID 420420777 |
-| `ProofRegistry` address | `0x2a643655e0c8bc41d0f535462b266ad36237dda1` |
-| Deployment tx hash | `0x657beae83fe86c825539a2ea7cce51f15876e69ddd19f543912721072539dd55` (block 291278) |
-| Attester address | `0xDc474EfaBB69fAe76c5201A986a06CDA3A696d26` |
+| `ProofRegistry` | `0x2a643655e0c8bc41d0f535462b266ad36237dda1` |
+| Deployment | `0x657beae83fe86c825539a2ea7cce51f15876e69ddd19f543912721072539dd55`, block 291278 |
+| Attester | `0xDc474EfaBB69fAe76c5201A986a06CDA3A696d26` |
 
-Tested on the live testnet by simulating `record` against the deployed contract: the real code hash from the attester is accepted, and a wrong hash, a zero hash, a funded wallet with no code, and a stranger's call all revert with the contract's own errors.
+Five real projects are recorded so far, each with its stored hash checked against the live code. The first is `Firzadf/nodescope`, transaction `0xa326887ff8493c4fb6b94bdc782f99f3cc1329f7e1ef4f8a15d46e05e10cf386`. The others are `Anshv784/potdrive`, `Rohitamalraj/DotProof`, `a252937166/ReviveCheck` and `lazydevpro/reachpot`. A record costs about 3.9 tPOT, so the other 37 proofs show none until they are checked again.
 
-First record made by the running app: `Firzadf/nodescope` at `0xd48da7eff3264bdd51a86b873da9ff6997aae99c`, tx `0xa326887ff8493c4fb6b94bdc782f99f3cc1329f7e1ef4f8a15d46e05e10cf386`. The contract's stored hash equals the proof's runtime hash. Four more followed: `Anshv784/potdrive`, `Rohitamalraj/DotProof`, `a252937166/ReviveCheck` and `lazydevpro/reachpot`, each with its stored hash checked against the live code. Each record costs about 3.9 tPOT, so the other 37 proofs show no record until they are checked again.
+**What a record means.** OneScan's checker attested that the repo matches the contract. It is not trustless, because OneScan holds the attester key. The contract enforces two things: only the attester can write, and a record can only point at code that is live. You do not have to trust it: every proof page lists the steps to repeat the check with `git`, `solc` and one `eth_getCode` call.
+
+### Account page
+
+Portaldot gives one account two addresses, and that confused me as a user too. [Look up any address](https://onescan.103-195-188-198.sslip.io/#accounts) to see both forms and both balances. From there, your own wallet can **map** a 5... account so its balance works with 0x tools, or **send** tPOT to a MetaMask address. OneScan never sees a key.
+
+### What I learned building on V3
+
+- A 0x account's 5... form is the address followed by twelve `0xEE` bytes. A 5... account's 0x form is the last 20 bytes of its keccak hash.
+- After `revive.mapAccount`, the native balance is usable as the 0x balance, minus the 0.1 tPOT existential deposit. I checked this on-chain.
+- MetaMask cannot sign for a mapped address, because its key is the 5... wallet.
+- tPOT has 14 decimals natively and 18 on the EVM RPC.
+- Deployments are expensive: `ProofRegistry`, at 1,530 bytes of code, cost about 133 tPOT. 8 of the 43 pairs had metadata stripped from their code, and I suspect cost is why, though that is an inference.
 
 ## Limitations
 
-- Sending tPOT to an 0x address was tested with SubWallet and real testnet tokens, and the balance rise was confirmed on-chain. Mapping was only run on an account that was already mapped, so a first-time map has not been tried with a real wallet.
-- EVM bytecode only. Contracts built for PolkaVM, and ink! contracts, are not verified.
-- A record on chain is OneScan's attestation, not a trustless proof. Anyone can reproduce the check.
-- Git submodule dependencies are fetched at the commit the repo pins. If GitHub's API cannot be read for that pin (for example a rate limit), the fetch uses the latest code and a failed comparison is reported as unable to finish.
+- EVM bytecode from Solidity only. PolkaVM, ink! and Yul sources are not checked.
+- Public GitHub repos on the Portaldot V3 testnet only.
+- A match says the code is what the repo shows. **It is not an audit**, and it does not say the code is safe.
 - A contract deployed from code that was never committed can never match.
-- Contracts created by another contract (a factory) have no creation block or deployer shown, because the lookup finds direct deployments only.
-- Public GitHub repos and Solidity only. Portaldot V3 testnet only.
-- One check runs at a time. State lives in a local SQLite file on one server.
-- A contract with no stored compiler version is tried with the version its repo names. A failure there is never a verdict, because the real version may be one that was not tried.
-- Yul sources are not compiled.
-- I have not measured adoption. Other teams' contracts were checked from their public repos; they have not been asked to use OneScan yet.
+- A contract with no stored compiler version is tried with the version its repo names. A failure there is never a verdict.
+- If GitHub's API cannot read a submodule pin, the fetch uses the latest code, and a failed comparison is reported as unable to finish.
+- Contracts created by a factory show no creation block or deployer.
+- Sending tPOT was tested with SubWallet and real testnet tokens, and confirmed on-chain. Mapping has only run on an account that was already mapped, so a first-time map has not been tried with a real wallet.
+- One check runs at a time, on one server, with state in a local SQLite file.
 
-## Coverage
+## Run it locally
 
-A read-only scan at block 284,796 found 132 contracts deployed directly on the EVM side of Portaldot V3 (successful contract-creation transactions; contracts created by other contracts are not counted).
+Needs Node 22.13 or later and network access to the Portaldot RPC, GitHub and the Solidity compiler binaries. No environment variable is required.
 
-I ran OneScan over 43 repo and contract pairs found in public Hacker House repos, through the public site, on a single-CPU server:
+```bash
+npm install
+npm run dev     # http://localhost:3000
+```
 
-| Result | Count | Notes |
+Then check it answers, and run a real check against it:
+
+```bash
+curl http://localhost:3000/api/pulse
+curl -X POST http://localhost:3000/api/check \
+  -H 'content-type: application/json' \
+  -d '{"repo":"Firzadf/nodescope","address":"0xd48da7eff3264bdd51a86b873da9ff6997aae99c"}'
+```
+
+| Tests | Command | Result |
 | --- | --- | --- |
-| Matched | 40 | Public proof pages. Includes contracts built with metadata stripped, and contracts whose code changed after deployment |
-| Does not match | 0 | The early engine reported 4. All 4 were real matches, missed because of untried settings or changed code, and led to the fixes below |
-| No verdict | 3 | Two appear hand-written in Yul and one repo has no Solidity source. OneScan says so instead of guessing |
+| Quick, no network | `npx vitest run src/lib/address src/lib/verify/pins-unit src/lib/verify/parse-limits src/lib/store src/app/api/_lib` | 24 tests, about 10 s |
+| Everything | `npm test` | 14 files, 106 tests passed, about 10 minutes. 84 are the check engine, some running live against the real chain, GitHub and compiler |
+| Contract | `forge test` in `contracts/` | 8 tests passed |
 
-That leaves 42 public proofs across 32 repos, covering 32 of the 132 direct deployments. The live meter on the landing page shows the current count.
+`attest.test.ts` starts a local `anvil`, so the full run needs [Foundry](https://getfoundry.sh) on your PATH. It never contacts Portaldot. These results come from a clean copy of this repository.
 
-**What the false negatives changed.** "Does not match" is now earned only when every settings combination ran, the dependencies were the ones the repo pinned, and every source file was built. Anything less is reported as unable to finish, not as a verdict against the repo.
+<details>
+<summary>Optional settings</summary>
 
-False claims were still refused after these changes: real repos checked against other teams' contracts never matched in any test run.
+| Variable | Used for | Default |
+| --- | --- | --- |
+| `EVM_RPC_URL` | EVM JSON-RPC | `https://test-evm-rpc-v3.portaldot.dev` |
+| `NATIVE_WS_URL` | Substrate node for the account page | `wss://test-node-v3.portaldot.dev` |
+| `NEXT_PUBLIC_NATIVE_WS_URL` | Same, for the wallet tools in the browser | same as above |
+| `DATA_DIR` | SQLite database | `./data` |
+| `ONESCAN_DATA_DIR` | Compiler cache. Set it to the same folder as `DATA_DIR` | `./data` |
+| `GITHUB_TOKEN` | Raises the GitHub API limit for the look-back | unset |
+| `ONESCAN_VERIFY_BUDGET_MS` | Total time for one check | 300000 |
+| `ONESCAN_COMPILE_TIMEOUT_MS` | Time for one compile | 120000 |
+| `REGISTRY_ADDRESS`, `ATTESTER_PRIVATE_KEY` | Together enable on-chain records. Server only, in `.env.local` | unset: no records |
+| `NEXT_PUBLIC_REPO_URL` | Adds a source link to the footer | unset |
 
-## Why Portaldot V3 needs this
+`node scripts/new-attester.mjs` makes an attester key and prints only the address. `scripts/deploy-registry.mjs` is a dry run unless you pass `--send`.
 
-V3 runs EVM contracts and PolkaVM contracts side by side on one chain. The deployed EVM code is plain solc output, so a repo can be checked against it directly, and the compiler version is stored in the bytecode itself. That is what makes a check with no uploads and no forms possible: the chain already says which compiler to use.
+To deploy, run `npm run build` and `npm start` behind a reverse proxy that overwrites `X-Forwarded-For`, because the rate limit of 10 checks per 10 minutes trusts that header. Allow outbound HTTPS to the RPC, `github.com`, `codeload.github.com`, `raw.githubusercontent.com`, `api.github.com`, `cdn.jsdelivr.net` and `binaries.soliditylang.org`.
+
+</details>
 
 ## Architecture
 
-The module map and a diagram are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). In short:
+The diagram and full module map are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 | Module | Job |
 | --- | --- |
-| `src/lib/verify/index.ts` | Runs one check end to end and decides the verdict |
-| `src/lib/verify/github.ts` | Resolves refs and downloads the repo archive safely |
-| `src/lib/verify/imports.ts`, `graph.ts` | Reads imports, remappings, submodules, npm packages |
-| `src/lib/verify/config.ts`, `pragma.ts` | Reads build settings and pragmas as text |
-| `src/lib/verify/compiler.ts` | Downloads solc, checks its published hash, compiles in a worker |
-| `src/lib/verify/metadata.ts` | Splits the metadata off bytecode and compares |
+| `src/lib/verify/index.ts` | Runs one check and decides the verdict |
+| `src/lib/verify/github.ts` | Resolves refs, downloads the archive within limits |
+| `src/lib/verify/imports.ts`, `graph.ts` | Finds imports, remappings, submodules, npm sources |
+| `src/lib/verify/config.ts`, `pragma.ts` | Reads build settings as text, never runs them |
+| `src/lib/verify/compiler.ts` | Fetches solc, checks its published hash, compiles in a worker |
+| `src/lib/verify/metadata.ts` | Splits metadata off bytecode and compares |
 | `src/lib/jobs.ts`, `store.ts` | Serial queue and SQLite storage |
-| `src/lib/chain.ts`, `native.ts`, `address.ts` | Chain reads and 5... to 0x address maths |
-| `src/lib/attest.ts` | Writes the on-chain record (server only) |
+| `src/lib/chain.ts`, `native.ts`, `address.ts` | Chain reads and address conversion |
+| `src/lib/attest.ts` | Writes the on-chain record, server only |
 | `contracts/ProofRegistry.sol` | Accepts a record only if it matches live code |
-
-## Deploying
-
-`next.config.ts` sets `output: "standalone"`. `npm run build` followed by `npm start` runs the production server; I ran both from a fresh clone and the server answered on its port. To deploy:
-
-- Use Node 22.13 or later and give the process a writable folder for `DATA_DIR` and `ONESCAN_DATA_DIR`.
-- Allow outbound HTTPS to the EVM RPC, `github.com`, `codeload.github.com`, `raw.githubusercontent.com`, `api.github.com`, `cdn.jsdelivr.net` and `binaries.soliditylang.org`.
-- Put it behind a reverse proxy that overwrites `X-Forwarded-For` with the real client address. The rate limit (10 checks per 10 minutes per client address) trusts the first entry of that header.
-- Keep `.env.local`, `data/` and any key out of the repository. They are in `.gitignore`.
 
 ## Credits
 
-Interface drawing kit: Stageshow by Benji Taylor (MIT). Copy was edited with the unslop process by Damir Sokolovsky (CC BY 4.0), https://github.com/heydamir/unslop. Everything third-party is listed in [NOTICE.md](NOTICE.md).
+The home page illustration uses Stageshow by Benji Taylor (MIT). Interface copy was edited with the [unslop](https://github.com/heydamir/unslop) process by Damir Sokolovsky (CC BY 4.0). Everything third-party is listed in [NOTICE.md](NOTICE.md).
 
 ## License
 
-MIT, see [LICENSE](LICENSE). Third-party licenses are in [NOTICE.md](NOTICE.md).
+[MIT](LICENSE)

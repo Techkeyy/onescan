@@ -1,4 +1,4 @@
-// Shared contracts between the engine, API and UI. Change only with director approval.
+// Shared contracts between the engine, API and UI.
 
 export type VmKind = "evm" | "polkavm" | "none";
 
