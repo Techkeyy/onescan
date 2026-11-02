@@ -143,7 +143,7 @@ You do not have to trust it: every proof page lists the steps to repeat the chec
 
 Tested on the live testnet by simulating `record` against the deployed contract: the real code hash from the attester is accepted, and a wrong hash, a zero hash, a funded wallet with no code, and a stranger's call all revert with the contract's own errors.
 
-First record made by the running app: `Firzadf/nodescope` at `0xd48da7eff3264bdd51a86b873da9ff6997aae99c`, tx `0xa326887ff8493c4fb6b94bdc782f99f3cc1329f7e1ef4f8a15d46e05e10cf386`. The contract's stored hash equals the proof's runtime hash. Each record costs about 3.9 tPOT, so proofs made before the registry went live show no record until they are checked again.
+First record made by the running app: `Firzadf/nodescope` at `0xd48da7eff3264bdd51a86b873da9ff6997aae99c`, tx `0xa326887ff8493c4fb6b94bdc782f99f3cc1329f7e1ef4f8a15d46e05e10cf386`. The contract's stored hash equals the proof's runtime hash. Four more followed: `Anshv784/potdrive`, `Rohitamalraj/DotProof`, `a252937166/ReviveCheck` and `lazydevpro/reachpot`, each with its stored hash checked against the live code. Each record costs about 3.9 tPOT, so the other 37 proofs show no record until they are checked again.
 
 ## Limitations
 
