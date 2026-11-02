@@ -1,15 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useSyncExternalStore, type ReactNode } from "react";
+import { useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import { shorten } from "./format";
 
 export const btnPrimary =
-  "inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-5 text-base font-semibold text-accent-ink transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50";
+  "btn-pop inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-5 text-base font-medium text-accent-ink disabled:cursor-not-allowed disabled:opacity-50";
 export const btnSecondary =
-  "inline-flex min-h-11 items-center justify-center rounded-lg border border-ink/40 px-4 text-base font-medium text-ink transition-colors hover:bg-ink/5 disabled:cursor-not-allowed disabled:opacity-50";
+  "btn-pop inline-flex min-h-11 items-center justify-center rounded-lg bg-surface px-4 text-base font-medium text-ink disabled:cursor-not-allowed disabled:opacity-50";
 export const inputCls =
-  "min-h-11 w-full rounded-lg border border-ink/40 bg-surface px-3 text-base text-ink placeholder:text-muted";
+  "min-h-11 w-full rounded-lg border border-ink/30 bg-surface px-3 text-base text-ink transition-shadow placeholder:text-muted";
 export const linkCls = "text-accent underline hover:opacity-80";
 
 function subscribe() {
@@ -174,13 +174,33 @@ export function Seal({ size = 26, className, draw = false }: { size?: number; cl
 
 export type StampTone = "ok" | "warn" | "bad" | "neutral";
 const stampCls: Record<StampTone, string> = {
-  ok: "text-ok",
-  warn: "text-warn",
-  bad: "text-bad",
-  neutral: "text-ink",
+  ok: "block-sage",
+  warn: "block-sand",
+  bad: "block-clay",
+  neutral: "block-paper",
 };
 
 /** The verdict. The hero of the product. */
+const BURST = [
+  ["-46px", "-30px", "120deg", "#c9c6ff"],
+  ["-10px", "-44px", "-80deg", "#a9dcc6"],
+  ["34px", "-34px", "160deg", "#efedf9"],
+  ["50px", "6px", "90deg", "#c9c6ff"],
+  ["26px", "36px", "200deg", "#a9dcc6"],
+  ["-30px", "32px", "-140deg", "#efedf9"],
+];
+
+/** Thrown once from a stamp when a real match lands. */
+export function StampBurst() {
+  return (
+    <span className="burst" aria-hidden="true">
+      {BURST.map(([x, y, r, c]) => (
+        <i key={x + y} style={{ "--x": x, "--y": y, "--r": r, "--c": c } as CSSProperties} />
+      ))}
+    </span>
+  );
+}
+
 export function Stamp({
   tone,
   kicker,
@@ -193,13 +213,18 @@ export function Stamp({
   children?: ReactNode;
 }) {
   return (
-    <div className={`stamp flex items-start justify-between gap-6 bg-surface ${stampCls[tone]}`}>
+    <div className={`stamp flex items-start justify-between gap-6 ${stampCls[tone]}`}>
       <div className="min-w-0">
         <p className="text-sm font-medium">{kicker}</p>
-        <h1 className="mt-1 font-serif text-4xl font-semibold leading-tight sm:text-5xl sm:tracking-tight">{title}</h1>
+        <h1 className="mt-1 font-serif text-4xl font-medium leading-tight sm:text-5xl sm:tracking-tight">{title}</h1>
         {children && <div className="mt-3 max-w-2xl text-base text-ink">{children}</div>}
       </div>
-      {tone === "ok" && <Seal size={72} draw className="hidden shrink-0 sm:block" />}
+      {tone === "ok" && (
+        <span className="relative hidden shrink-0 sm:block">
+          <Seal size={72} draw />
+          <StampBurst />
+        </span>
+      )}
     </div>
   );
 }

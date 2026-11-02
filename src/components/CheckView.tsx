@@ -87,7 +87,7 @@ function StageList({ stages }: { stages: Stage[] }) {
           !known || (id === "compare" && compiling && known.state === "running") ? { id, state: "pending" } : known;
         const last = i === STAGE_ORDER.length - 1;
         return (
-          <li key={id} className="grid grid-cols-[2rem_minmax(0,1fr)] gap-x-3">
+          <li key={id} className={`grid grid-cols-[2rem_minmax(0,1fr)] gap-x-3 ${s.state === "running" ? "stage-now" : ""}`}>
             <div className="flex flex-col items-center">
               <span
                 aria-hidden="true"
@@ -128,6 +128,23 @@ function StageList({ stages }: { stages: Stage[] }) {
         );
       })}
     </ol>
+  );
+}
+
+/** How far the real stages have got. Never estimated: it moves only when a stage finishes. */
+function StageProgress({ stages }: { stages: Stage[] }) {
+  const done = stages.filter((s) => s.state === "done").length;
+  return (
+    <div
+      role="progressbar"
+      aria-label="Stages finished"
+      aria-valuemin={0}
+      aria-valuemax={STAGE_ORDER.length}
+      aria-valuenow={done}
+      className="mb-5 h-2.5 overflow-hidden rounded-full bg-rule"
+    >
+      <div className="progress-run meter-fill h-full" style={{ width: `${Math.max(4, (done / STAGE_ORDER.length) * 100)}%` }} />
+    </div>
   );
 }
 
@@ -352,13 +369,14 @@ export function CheckView({ id }: { id: string }) {
       )}
 
       <div className="mt-8 grid grid-cols-[minmax(0,1fr)] items-start gap-x-12 gap-y-8 lg:grid-cols-[minmax(0,1fr)_24rem]">
-        <section aria-labelledby="stages-title" className="border border-rule bg-surface p-4 sm:p-6">
+        <section aria-labelledby="stages-title" className="print p-4 sm:p-6">
           <div className="mb-5 flex flex-wrap items-baseline justify-between gap-x-4">
             <h2 id="stages-title" className="font-serif text-2xl font-medium">
               {job.state === "queued" || job.state === "running" ? "What is happening" : "What happened"}
             </h2>
             <Elapsed job={job} />
           </div>
+          {(job.state === "queued" || job.state === "running") && <StageProgress stages={job.stages} />}
           <StageList stages={job.stages} />
         </section>
         <section aria-labelledby="inputs-title">

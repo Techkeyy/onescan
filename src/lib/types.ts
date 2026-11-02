@@ -147,6 +147,8 @@ export type Pulse = {
   queued: number;
   proofs: number;
   exact: number;
+  /** Proofs with a confirmed record on the ProofRegistry. */
+  onchain: number;
   /** A full scan of successful contract-creation transactions, and how many of those have a proof. */
   census: { contracts: number; block: number; proven: number };
   latest: { address: `0x${string}`; repo: string; contract: string; kind: MatchKind; commit: string; checkedAt: number }[];

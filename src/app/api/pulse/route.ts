@@ -20,6 +20,7 @@ export async function GET() {
     queued: store.countQueued(),
     proofs: proofs.length,
     exact: proofs.filter((p) => p.match.kind === "exact").length,
+    onchain: proofs.filter((p) => p.attestation?.state === "confirmed").length,
     census: {
       contracts: direct.size,
       block: census.block,

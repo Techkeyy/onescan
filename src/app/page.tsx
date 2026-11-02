@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LiveNumbers, ProofMachine, ProofTicker, Tilt } from "@/components/Alive";
 import { BlockStrip } from "@/components/BlockStrip";
 import { CheckFlow } from "@/components/CheckFlow";
 import { CommitTimeline } from "@/components/CommitTimeline";
@@ -15,7 +16,7 @@ const REFUSE = `/check?repo=Gieez/portaldot-revivescope&address=${NODESCOPE}&run
 const MATCH = `/check?repo=Firzadf/nodescope&address=${NODESCOPE}&run=1`;
 
 const wrap = "mx-auto w-full max-w-6xl px-4";
-const h2 = "font-serif text-3xl font-medium leading-tight sm:text-4xl";
+const h2 = "font-serif text-4xl font-medium leading-tight tracking-tight sm:text-5xl";
 
 const LIMITS = [
   "A match says the code is what the repo shows. It does not say the code is safe. This is not an audit.",
@@ -27,18 +28,19 @@ const LIMITS = [
 export default function Home() {
   return (
     <div>
-      <section className="border-b border-rule">
-        <div className={`${wrap} grid grid-cols-[minmax(0,1fr)] items-start gap-x-16 gap-y-10 py-12 lg:grid-cols-[minmax(0,1fr)_28rem] lg:py-20`}>
+      <section>
+        <div className={`${wrap} grid grid-cols-[minmax(0,1fr)] items-center gap-x-14 gap-y-10 py-12 lg:grid-cols-[minmax(0,1fr)_28rem] lg:py-20`}>
           <div>
             <LiveStatus />
-            <h1 className="mt-4 font-serif text-5xl font-medium leading-[1.05] tracking-tight sm:text-6xl">
-              A repo link proves nothing. OneScan checks it against the chain.
+            <h1 className="mt-4 font-serif text-5xl font-medium leading-[1.08] tracking-tight sm:text-6xl">
+              A repo link proves <mark className="mark mark-clay">nothing.</mark> OneScan checks it against{" "}
+              <mark className="mark mark-sage">the chain.</mark>
             </h1>
             <p className="mt-6 max-w-xl text-lg">
               On Portaldot V3, anyone can put a GitHub link next to a contract address. Paste both here and OneScan
               rebuilds the code and tells you whether it is what is really running. No wallet, no account.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-wrap gap-4">
               <Link href="/check" className={btnPrimary}>
                 Check a contract
               </Link>
@@ -46,20 +48,34 @@ export default function Home() {
                 Watch it refuse a false claim
               </Link>
             </div>
-            <p className="mt-3 text-sm text-muted">The second button runs a real check, right now, on real contracts.</p>
+            <p className="mt-4 text-sm text-muted">The second button runs a real check, right now, on real contracts.</p>
           </div>
 
-          <aside aria-label="Latest proofs" className="border border-rule bg-surface">
-            <div className="flex items-baseline justify-between gap-4 border-b border-rule px-4 py-3">
-              <h2 className="font-serif text-xl font-medium">Proof ledger</h2>
-              <Link href="/proofs" className="text-sm text-accent underline">
-                See all
-              </Link>
-            </div>
-            <div className="px-4">
+          <Tilt>
+            <ProofMachine />
+          </Tilt>
+        </div>
+      </section>
+
+      <ProofTicker />
+
+      <section className="block-slate">
+        <div className={`${wrap} reveal py-14 lg:py-20`}>
+          <h2 className={h2}>Live on Portaldot V3</h2>
+          <div className="mt-8">
+            <LiveNumbers />
+          </div>
+          <aside aria-label="Latest proofs" className="tokens-base print mt-8 grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]" style={{ "--print-shadow": "#00000040" } as React.CSSProperties}>
+            <div className="min-w-0 p-5">
+              <div className="flex items-baseline justify-between gap-4">
+                <h3 className="font-serif text-2xl font-medium">Proof ledger</h3>
+                <Link href="/proofs" className="text-sm text-accent underline">
+                  See all
+                </Link>
+              </div>
               <ProofLedger limit={5} />
             </div>
-            <div className="space-y-4 border-t border-rule px-4 py-4">
+            <div className="space-y-5 border-t-2 border-rule p-5 lg:border-l-2 lg:border-t-0">
               <Coverage />
               <BlockStrip />
             </div>
@@ -67,8 +83,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-b border-rule bg-surface">
-        <div className={`${wrap} reveal grid grid-cols-[minmax(0,1fr)] gap-x-16 gap-y-8 py-14 lg:grid-cols-2 lg:py-20`}>
+      <section className="block-pine">
+        <div className={`${wrap} reveal grid grid-cols-[minmax(0,1fr)] items-center gap-x-14 gap-y-8 py-14 lg:grid-cols-2 lg:py-20`}>
           <div>
             <h2 className={h2}>The latest code is often not the running code</h2>
             <p className="mt-4 max-w-xl text-lg">
@@ -76,7 +92,7 @@ export default function Home() {
               another, and nothing on the page tells them.
             </p>
           </div>
-          <div>
+          <div className="tokens-base print p-5" style={{ "--print-shadow": "#00000040" } as React.CSSProperties}>
             <p className="font-medium">One real contract on V3, checked by OneScan</p>
             <div className="mt-3">
               <CommitTimeline />
@@ -89,22 +105,24 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="how" className="border-b border-rule">
+      <section id="how">
         <div className={`${wrap} reveal py-14 lg:py-20`}>
           <h2 className={h2}>How a check runs</h2>
           <CheckFlow />
         </div>
       </section>
 
-      <section className="border-b border-rule bg-surface">
+      <section className="block-pine">
         <div className={`${wrap} reveal py-14 lg:py-20`}>
           <h2 className={h2}>Four possible answers, and it never guesses</h2>
-          <VerdictExplorer />
+          <div className="tokens-base print mt-8 p-5 sm:p-6" style={{ "--print-shadow": "#00000040" } as React.CSSProperties}>
+            <VerdictExplorer />
+          </div>
         </div>
       </section>
 
-      <section className="border-b border-rule">
-        <div className={`${wrap} reveal grid grid-cols-[minmax(0,1fr)] items-start gap-x-16 gap-y-10 py-14 lg:grid-cols-2 lg:py-20`}>
+      <section>
+        <div className={`${wrap} reveal grid grid-cols-[minmax(0,1fr)] items-start gap-x-14 gap-y-10 py-14 lg:grid-cols-2 lg:py-20`}>
           <div className="space-y-12">
             <div>
               <h2 className={h2}>If you built it, show it</h2>
@@ -133,8 +151,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-b border-rule bg-surface">
-        <div className={`${wrap} reveal grid grid-cols-[minmax(0,1fr)] gap-x-16 gap-y-6 py-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:py-20`}>
+      <section className="bg-surface">
+        <div className={`${wrap} reveal grid grid-cols-[minmax(0,1fr)] gap-x-14 gap-y-6 py-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:py-20`}>
           <h2 className={h2}>What a proof does not tell you</h2>
           <ul className="divide-y divide-rule border-y border-rule">
             {LIMITS.map((l) => (
@@ -146,9 +164,9 @@ export default function Home() {
         </div>
       </section>
 
-      <section>
-        <div className={`${wrap} reveal flex flex-wrap items-center justify-between gap-6 py-14`}>
-          <p className="max-w-2xl font-serif text-3xl font-medium leading-tight">
+      <section className="block-plum">
+        <div className={`${wrap} reveal flex flex-wrap items-center justify-between gap-6 py-16`}>
+          <p className="max-w-3xl font-serif text-4xl font-medium leading-tight tracking-tight sm:text-5xl">
             Have a repo and an address? Find out in about a minute.
           </p>
           <Link href="/check" className={btnPrimary}>

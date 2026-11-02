@@ -1,37 +1,44 @@
 @import "tailwindcss";
 
-/* Notary palette: paper, ink, one blue accent. Green, amber and red stay semantic. */
-:root {
-  --paper: #f5f1e8;
-  --surface: #fbf9f3;
-  --ink: #17181d;
-  --muted: #55575f;
-  --rule: #d6cfbd;
-  --accent: #1e3a8a;
+/* Deep indigo and one soft periwinkle accent. Sage, sand and clay keep their meaning: match, unfinished, refused. */
+:root,
+.tokens-base {
+  --paper: #f6f5fb;
+  --surface: #ffffff;
+  --ink: #17163a;
+  --muted: #55547a;
+  --rule: #dcdaf0;
+  --accent: #4a3fc4;
   --accent-ink: #ffffff;
-  --ok: #1b6a3f;
-  --ok-bg: #e3efe5;
-  --warn: #7a4e00;
-  --warn-bg: #f5e9cc;
-  --bad: #a11d1d;
-  --bad-bg: #f6dcd9;
+  --ok: #1f6b52;
+  --ok-bg: #e0f1ea;
+  --warn: #755610;
+  --warn-bg: #f4ecd6;
+  --bad: #a53d33;
+  --bad-bg: #f7e3df;
+  --print-line: #cfcce8;
+  --print-shadow: #17163a1f;
+  color: var(--ink);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #111318;
-    --surface: #181b22;
-    --ink: #ece8dc;
-    --muted: #a4a7b0;
-    --rule: #2c303a;
-    --accent: #9db4ff;
-    --accent-ink: #0d1230;
-    --ok: #6fd49a;
-    --ok-bg: #14281d;
-    --warn: #e8bb5c;
-    --warn-bg: #2c2310;
-    --bad: #ff8a82;
-    --bad-bg: #301516;
+  :root,
+  .tokens-base {
+    --paper: #0d0e1f;
+    --surface: #17193a;
+    --ink: #f3f0ff;
+    --muted: #b4b6d6;
+    --rule: #30325e;
+    --accent: #9c97ff;
+    --accent-ink: #0d0c2a;
+    --ok: #8fe0bd;
+    --ok-bg: #12332b;
+    --warn: #e8c877;
+    --warn-bg: #2f2814;
+    --bad: #f0a79b;
+    --bad-bg: #38201f;
+    --print-line: #3a3c70;
+    --print-shadow: #0000006b;
   }
 }
 
@@ -41,6 +48,7 @@
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-rule: var(--rule);
+  --color-print-line: var(--print-line);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
   --color-ok: var(--ok);
@@ -82,17 +90,18 @@ a {
 /* The verdict stamp: a double rule ring, pressed in once on arrival. */
 .stamp {
   position: relative;
-  border: 3px solid currentColor;
-  border-radius: 4px;
-  padding: 20px 24px;
-  animation: stamp-in 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  border: 1px solid var(--print-line);
+  border-radius: 12px;
+  box-shadow: 5px 5px 0 #00000040;
+  padding: 24px 28px;
+  animation: stamp-slam 420ms cubic-bezier(0.22, 1.15, 0.36, 1) both;
 }
 .stamp::after {
   content: "";
   position: absolute;
   inset: 4px;
-  border: 1px solid currentColor;
-  border-radius: 1px;
+  border: 1px solid var(--print-line);
+  border-radius: 6px;
   pointer-events: none;
 }
 @keyframes stamp-in {
@@ -233,6 +242,291 @@ a {
   animation: draw 420ms 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Colour blocks. Each one resets the tokens, so everything inside stays readable on it. */
+.block-sage,
+.block-sand,
+.block-clay,
+.block-lilac {
+  --ink: #14123a;
+  --muted: #34325c;
+  --rule: #14123a33;
+  --accent: #2f2796;
+  --accent-ink: #ffffff;
+  --ok: #124a38;
+  --warn: #4f3a08;
+  --bad: #6f2319;
+  --print-line: #14123a40;
+  --print-shadow: #14123a1f;
+  color: var(--ink);
+}
+.block-sage {
+  --paper: #a9dcc6;
+  --surface: #a9dcc6;
+  background: #a9dcc6;
+}
+.block-sand {
+  --paper: #e3cf9e;
+  --surface: #e3cf9e;
+  background: #e3cf9e;
+}
+.block-clay {
+  --paper: #e6a99b;
+  --surface: #e6a99b;
+  background: #e6a99b;
+}
+.block-lilac {
+  --paper: #c9c6ff;
+  --surface: #c9c6ff;
+  background: #c9c6ff;
+}
+/* The page's own sections: gentle steps of the same purple. */
+.block-slate,
+.block-pine,
+.block-plum {
+  --ink: #f3f0ff;
+  --muted: #c2c3e2;
+  --rule: #f3f0ff2e;
+  --accent: #c0bcff;
+  --accent-ink: #0d0c2a;
+  --ok: #8fe0bd;
+  --warn: #e8c877;
+  --bad: #f0a79b;
+  --print-line: #f3f0ff2e;
+  --print-shadow: #0000006b;
+  color: var(--ink);
+}
+.block-slate {
+  --paper: #191a42;
+  --surface: #191a42;
+  background: #191a42;
+}
+.block-pine {
+  --paper: #131431;
+  --surface: #131431;
+  background: #131431;
+}
+.block-plum {
+  --paper: #2a2670;
+  --surface: #2a2670;
+  background: #2a2670;
+}
+.block-paper {
+  --paper: #efedf9;
+  --surface: #efedf9;
+  --ink: #14123a;
+  --muted: #45436d;
+  --rule: #14123a33;
+  --accent: #2f2796;
+  --accent-ink: #ffffff;
+  --print-line: #14123a40;
+  --print-shadow: #14123a1f;
+  background: #efedf9;
+  color: var(--ink);
+}
+
+/* Cards and buttons: a thin rule and a short, quiet offset. */
+.print {
+  background: var(--surface);
+  border: 1px solid var(--print-line);
+  border-radius: 12px;
+  box-shadow: 4px 4px 0 var(--print-shadow);
+}
+.btn-pop {
+  border: 1px solid var(--print-line);
+  box-shadow: 2px 2px 0 var(--print-shadow);
+  transition:
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 180ms ease;
+}
+.btn-pop:hover:not(:disabled) {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--print-shadow);
+}
+.btn-pop:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 var(--print-shadow);
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--print-line);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* A highlighter stroke that draws itself across a word when the page opens. */
+.mark {
+  background-color: transparent;
+  color: #14123a;
+  padding: 0 0.12em;
+  border-radius: 6px;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  box-decoration-break: clone;
+  animation: mark-draw 1000ms 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.mark-clay {
+  background-image: linear-gradient(#e6a99b, #e6a99b);
+}
+.mark-sage {
+  background-image: linear-gradient(#a9dcc6, #a9dcc6);
+  animation-delay: 650ms;
+}
+@keyframes mark-draw {
+  from {
+    background-size: 0% 100%;
+    color: var(--ink);
+  }
+}
+
+/* Reading progress across the top of the page. */
+.scroll-bar {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 40;
+  height: 3px;
+  background: var(--accent);
+  transform-origin: left;
+  transform: scaleX(0);
+  pointer-events: none;
+}
+@supports (animation-timeline: scroll()) {
+  .scroll-bar {
+    animation: scroll-grow linear both;
+    animation-timeline: scroll(root);
+  }
+  .pop-in {
+    animation: pop-in linear both;
+    animation-timeline: view();
+    animation-range: entry calc(var(--i, 0) * 8%) entry calc(45% + var(--i, 0) * 8%);
+  }
+}
+@keyframes scroll-grow {
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
+/* The moving list of real proofs. Stops under the pointer so a row can be read and clicked. */
+.ticker-track {
+  animation: ticker 110s linear infinite;
+}
+.ticker:hover .ticker-track,
+.ticker:focus-within .ticker-track {
+  animation-play-state: paused;
+}
+@keyframes ticker {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.tilt {
+  perspective: 900px;
+}
+.tilt > * {
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.machine-in {
+  animation: machine-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes machine-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.machine-stamp {
+  animation: stamp-slam 420ms cubic-bezier(0.22, 1.15, 0.36, 1) both;
+}
+@keyframes stamp-slam {
+  from {
+    opacity: 0;
+    transform: scale(1.22) rotate(-1.5deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.99);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* Flat squares thrown out by a stamp when a match lands. */
+.burst {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  pointer-events: none;
+}
+.burst i {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  background: var(--c);
+  opacity: 0;
+  animation: burst 900ms 120ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes burst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0);
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--x), var(--y)) rotate(var(--r));
+  }
+}
+
+.verdict-cell {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cell-in 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes cell-in {
+  from {
+    opacity: 0;
+    transform: scaleY(0.2);
+  }
+}
+
+/* The check's own progress, from the real stages. Stripes move only while work is running. */
+.progress-run {
+  background-image: repeating-linear-gradient(-45deg, #a9dcc6 0 12px, #97cfb7 12px 24px);
+  background-size: 200% 100%;
+  animation: stripes 2.6s linear infinite;
+}
+@keyframes stripes {
+  to {
+    background-position: -68px 0;
+  }
+}
+.stage-now {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-radius: 8px;
+}
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -245,9 +539,26 @@ a {
   .stamp,
   .pulse,
   .ledger-row,
+  .verdict-cell,
+  .mark,
+  .machine-in,
+  .machine-stamp,
+  .burst i,
+  .pop-in,
+  .progress-run,
+  .ticker-track,
   .tick,
   .node-running::after {
     animation: none;
+  }
+  .scroll-bar {
+    display: none;
+  }
+  .ticker {
+    overflow-x: auto;
+  }
+  .tilt > * {
+    transform: none;
   }
 }
 

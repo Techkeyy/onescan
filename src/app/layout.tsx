@@ -24,6 +24,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <div className="scroll-bar" aria-hidden="true" />
         <SiteHeader />
         <main className="w-full flex-1">{children}</main>
         <SiteFooter />
