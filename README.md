@@ -147,7 +147,7 @@ First record made by the running app: `Firzadf/nodescope` at `0xd48da7eff3264bdd
 
 ## Limitations
 
-- The account tools (map a 5... account for EVM use, or send tPOT to a MetaMask address) have not been tested with a real wallet.
+- Sending tPOT to an 0x address was tested with SubWallet and real testnet tokens, and the balance rise was confirmed on-chain. Mapping was only run on an account that was already mapped, so a first-time map has not been tried with a real wallet.
 - EVM bytecode only. Contracts built for PolkaVM, and ink! contracts, are not verified.
 - A record on chain is OneScan's attestation, not a trustless proof. Anyone can reproduce the check.
 - Git submodule dependencies are fetched at the commit the repo pins. If GitHub's API cannot be read for that pin (for example a rate limit), the fetch uses the latest code and a failed comparison is reported as unable to finish.

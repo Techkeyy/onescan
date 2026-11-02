@@ -65,13 +65,14 @@ export function startFailureMessage(r: { status: number; error: string; retryAft
 export function useApi<T>(path: string | null) {
   const [nonce, setNonce] = useState(0);
   const key = `${path}#${nonce}`;
-  const [res, setRes] = useState<{ key: string; r: ApiResult<T> } | null>(null);
+  const [res, setRes] = useState<{ key: string; path: string; r: ApiResult<T>; good: ApiResult<T> | null } | null>(null);
 
   useEffect(() => {
     if (!path) return;
     const ac = new AbortController();
     apiGet<T>(path, ac.signal).then((r) => {
-      if (!ac.signal.aborted) setRes({ key, r });
+      if (ac.signal.aborted) return;
+      setRes((prev) => ({ key, path, r, good: r.ok ? r : prev?.path === path ? prev.good : null }));
     });
     return () => ac.abort();
   }, [path, key]);
@@ -80,6 +81,8 @@ export function useApi<T>(path: string | null) {
   return {
     loading,
     result: loading ? null : (res?.r ?? null),
+    /** The last successful answer for this same path, kept while a reload runs or after one fails. */
+    lastGood: res?.path === path ? res.good : null,
     reload: () => setNonce((n) => n + 1),
   };
 }

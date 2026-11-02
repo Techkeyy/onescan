@@ -23,9 +23,12 @@ function Balance({ raw, decimals }: { raw: string | null; decimals: number }) {
 }
 
 export function AddressPage({ input }: { input: string }) {
-  const { loading, result, reload } = useApi<AddressView>(`/api/address/${encodeURIComponent(input)}`);
+  const { loading, result: fresh, lastGood, reload } = useApi<AddressView>(`/api/address/${encodeURIComponent(input)}`);
+  // A refresh keeps the page in place, so the wallet panel below keeps its result on screen.
+  const result = lastGood ?? fresh;
+  const refreshFailed = !loading && !!lastGood && !!fresh && !fresh.ok;
 
-  if (loading) return <Loading what="Reading the account from the chain. This can take up to 30 seconds." />;
+  if (loading && !lastGood) return <Loading what="Reading the account from the chain. This can take up to 30 seconds." />;
   if (!result) return null;
   if (!result.ok) {
     if (result.status === 400) {
@@ -86,6 +89,17 @@ export function AddressPage({ input }: { input: string }) {
           </Field>
         </dl>
       </section>
+
+      {refreshFailed && (
+        <div className="mt-4">
+          <Notice tone="warn" role="status" title="These balances may be out of date">
+            OneScan could not read them again just now.{" "}
+            <button type="button" onClick={reload} className={linkCls}>
+              Read again
+            </button>
+          </Notice>
+        </div>
+      )}
 
       {(v.nativeFree === null || v.evmBalance === null) && (
         <div className="mt-4">

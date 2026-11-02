@@ -2,7 +2,7 @@
 
 // Client-only. Loaded with dynamic(..., { ssr: false }); the wallet libraries are imported inside handlers,
 // so they never load on the server or before the user presses Connect.
-// UNTESTED with a real wallet and real tokens. Do not claim it works until the owner has tried it.
+// Send tested with SubWallet and real testnet tokens on 2026-11-02. First-time mapping has not been tried with a real wallet.
 
 import { useRef, useState } from "react";
 import { parseAddress, toTwin } from "@/lib/address";
@@ -13,7 +13,8 @@ import { Notice, btnPrimary, btnSecondary, inputCls } from "./ui";
 
 const NATIVE_DECIMALS = 14;
 const WS_URL = process.env.NEXT_PUBLIC_NATIVE_WS_URL || "wss://test-node-v3.portaldot.dev";
-const NODE_TIMEOUT_MS = 12_000;
+// Measured against the testnet node: a connection takes between 4 and 14 seconds.
+const NODE_TIMEOUT_MS = 45_000;
 const CONFIRM_TRIES = 8;
 const CONFIRM_EVERY_MS = 2_500;
 
@@ -58,6 +59,38 @@ function rose(before: Balances, after: Balances): boolean {
 
 type OptionalAccount = { isSome: boolean; unwrap(): { toString(): string } };
 
+// One connection for the whole page, so each action does not wait for the chain's metadata again.
+let nodeConnection: { provider: import("@polkadot/api").WsProvider; api: Promise<import("@polkadot/api").ApiPromise> } | null = null;
+
+function dropConnection() {
+  const old = nodeConnection;
+  nodeConnection = null;
+  old?.provider.disconnect().catch(() => {});
+}
+
+async function connectNode(): Promise<import("@polkadot/api").ApiPromise> {
+  if (nodeConnection) {
+    const api = await nodeConnection.api.catch(() => null);
+    if (api?.isConnected) return api;
+    dropConnection();
+  }
+  const { ApiPromise, WsProvider } = await import("@polkadot/api");
+  const provider = new WsProvider(WS_URL);
+  const api = Promise.race([
+    ApiPromise.create({ provider, noInitWarn: true }),
+    sleep(NODE_TIMEOUT_MS).then(() => {
+      throw new Error("node-timeout");
+    }),
+  ]);
+  nodeConnection = { provider, api };
+  try {
+    return await api;
+  } catch (e) {
+    dropConnection();
+    throw e;
+  }
+}
+
 function fmt(v: bigint | null, decimals: number) {
   return v === null ? "Could not read" : `${formatUnits(v.toString(), decimals).full} tPOT`;
 }
@@ -89,6 +122,8 @@ export default function FundPanel({ target: initialTarget, onChanged }: { target
       setAccounts(found.map((a) => ({ address: a.address, name: a.meta.name ?? "Account" })));
       setFrom(found[0].address);
       setPhase({ k: "ready" });
+      // Start now, so the first action does not have to wait. A failure here is reported by that action.
+      connectNode().catch(() => {});
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       if (/reject|cancel|denied|not allowed/i.test(msg)) {
@@ -141,22 +176,10 @@ export default function FundPanel({ target: initialTarget, onChanged }: { target
     setPhase({ k: "node" });
     let api: import("@polkadot/api").ApiPromise | null = null;
     try {
-      const [{ ApiPromise, WsProvider }, dapp] = await Promise.all([
-        import("@polkadot/api"),
-        import("@polkadot/extension-dapp"),
-      ]);
-      const provider = new WsProvider(WS_URL);
+      const dapp = await import("@polkadot/extension-dapp");
       try {
-        api = await Promise.race([
-          ApiPromise.create({ provider, noInitWarn: true }),
-          sleep(NODE_TIMEOUT_MS).then(() => {
-            throw new Error("node-timeout");
-          }),
-        ]);
+        api = await connectNode();
       } catch {
-        try {
-          await provider.disconnect();
-        } catch {}
         setPhase({
           k: "error",
           kind: "node",
@@ -260,9 +283,6 @@ export default function FundPanel({ target: initialTarget, onChanged }: { target
       }
     } finally {
       busy.current = false;
-      try {
-        await api?.disconnect();
-      } catch {}
     }
   }
 
@@ -274,22 +294,10 @@ export default function FundPanel({ target: initialTarget, onChanged }: { target
     setPhase({ k: "node" });
     let api: import("@polkadot/api").ApiPromise | null = null;
     try {
-      const [{ ApiPromise, WsProvider }, dapp] = await Promise.all([
-        import("@polkadot/api"),
-        import("@polkadot/extension-dapp"),
-      ]);
-      const provider = new WsProvider(WS_URL);
+      const dapp = await import("@polkadot/extension-dapp");
       try {
-        api = await Promise.race([
-          ApiPromise.create({ provider, noInitWarn: true }),
-          sleep(NODE_TIMEOUT_MS).then(() => {
-            throw new Error("node-timeout");
-          }),
-        ]);
+        api = await connectNode();
       } catch {
-        try {
-          await provider.disconnect();
-        } catch {}
         setPhase({ k: "error", kind: "node", message: "Could not reach the Portaldot node. Nothing changed. Try again in a moment." });
         return;
       }
@@ -338,9 +346,6 @@ export default function FundPanel({ target: initialTarget, onChanged }: { target
       }
     } finally {
       busy.current = false;
-      try {
-        await api?.disconnect();
-      } catch {}
     }
   }
 
@@ -375,7 +380,7 @@ export default function FundPanel({ target: initialTarget, onChanged }: { target
         wallet asks you to approve each step. OneScan never sees your keys and never asks for a seed phrase.
       </p>
       <p className="mt-1 max-w-2xl text-sm text-muted">
-        These tools have not yet been tested with a real wallet and real tokens. Try a small amount first.
+        Sending has been tested with a real wallet on the testnet. First-time mapping has not, so try a small amount first.
       </p>
 
       <div className="mt-4 space-y-4" aria-live="polite">
@@ -497,7 +502,7 @@ export default function FundPanel({ target: initialTarget, onChanged }: { target
           </form>
         )}
 
-        {phase.k === "node" && <Notice title="Connecting to the Portaldot node">Checking your balance before the wallet opens.</Notice>}
+        {phase.k === "node" && <Notice title="Connecting to the Portaldot node">This can take up to a minute. Nothing has been sent, and your wallet opens only when it is ready.</Notice>}
         {phase.k === "wallet" && <Notice title="Waiting for your approval">Approve or reject in your wallet window. Nothing has been sent yet.</Notice>}
         {phase.k === "submitted" && <Notice title="Submitted">The transfer was sent to the network and is waiting for a block.</Notice>}
         {phase.k === "inblock" && <Notice title="In a block">Included in a block. Checking that the balance rose.</Notice>}

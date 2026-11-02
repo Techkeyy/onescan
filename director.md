@@ -7,7 +7,7 @@ Idea research: `C:\Users\HomePC\Desktop\skill\idea-research\portaldot-hacker-hou
 
 ## Authoritative status
 
-**BUILDING: INTEGRATION PROVEN on the public URL https://onescan.103-195-188-198.sslip.io. ProofRegistry LIVE on testnet at `0x2a643655e0c8bc41d0f535462b266ad36237dda1`, first real record confirmed 2026-11-02. Account tools not yet tested with a wallet: owner holds about 200 tPOT for that.**
+**BUILDING: INTEGRATION PROVEN on the public URL https://onescan.103-195-188-198.sslip.io. ProofRegistry LIVE on testnet at `0x2a643655e0c8bc41d0f535462b266ad36237dda1`, first real record confirmed 2026-11-02. Send tested with the owner's wallet and confirmed on-chain; first-time Map not tried, because the owner's account was already mapped.**
 
 Update this line after every phase. Allowed words: BUILDING, COMPONENT PROVEN,
 INTEGRATION PROVEN, UAT READY, UAT PASS, RELEASE READY, SUBMISSION READY, FINISHED.
@@ -77,10 +77,10 @@ Reference wallet (owner's, public): `5DcritAN6VxWuzBKX7VoLqy8yotyyCA1AX1cSpH63So
 | False repos are refused | Same comparison | Server | Wrong repo returns no match on deployed UI | UNPROVEN |
 | Exact vs code match is honest | Compare metadata hash separately | Server | Both labels shown correctly | UNPROVEN |
 | Proof is re-checked live | Page compares stored hash with current `eth_getCode` | Server + chain | Changed code shows as changed (unit-level) | UNPROVEN |
-| On-chain record matches real code | Registry reverts unless `target.codehash == runtimeHash` | **Contract, HARD** | Wrong hash reverts on testnet | UNPROVEN |
-| Only the attester writes | `onlyAttester` | **Contract, HARD** | Non-attester reverts on testnet | UNPROVEN |
+| On-chain record matches real code | Registry reverts unless `target.codehash == runtimeHash` | **Contract, HARD** | Wrong hash reverts on testnet | PROVEN on testnet 2026-11-02 |
+| Only the attester writes | `onlyAttester` | **Contract, HARD** | Non-attester reverts on testnet | PROVEN on testnet 2026-11-02 |
 | Attestation means OneScan's server checked it | Attester key | SOFT, say so plainly | Stated in UI and README | Planned wording |
-| Fund moves real tPOT | User signs native transfer | User's wallet + chain | Owner's UAT: balance changes on 0x | UNPROVEN, needs tPOT |
+| Fund moves real tPOT | User signs native transfer | User's wallet + chain | Owner's UAT: balance changes on 0x | PROVEN 2026-11-02: 5 and 1 tPOT sent from SubWallet, confirmed on-chain |
 
 ## Engineering rules
 
@@ -92,7 +92,7 @@ Reference wallet (owner's, public): `5DcritAN6VxWuzBKX7VoLqy8yotyyCA1AX1cSpH63So
 
 ## Open blockers
 
-1. tPOT not received. Blocks registry deployment and Fund UAT.
+1. RESOLVED 2026-11-02: tPOT received; registry deployed; Send tested.
 2. Production host: owner approved a shared VPS on the condition that other services there are not disturbed. Operating details are in the gitignored `director.private.md`, which must stay out of the public repo.
 
 ## Log
@@ -108,7 +108,7 @@ Reference wallet (owner's, public): `5DcritAN6VxWuzBKX7VoLqy8yotyyCA1AX1cSpH63So
 1. DONE 2026-11-01: public URL live, neighbours match baseline; true and false journeys walked through the form.
 2. Owner handles the DoraHacks submission; the director prepares everything else.
 3. When tPOT arrives: `scripts/new-attester.mjs`, deploy ProofRegistry, test wrong-hash and non-attester reverts and EXTCODEHASH on testnet, set REGISTRY_ADDRESS and ATTESTER_PRIVATE_KEY in the server env file.
-4. Owner UAT of the Fund panel, untested with a real wallet.
+4. DONE 2026-11-02 for Send: found and fixed the panel losing its result on refresh, and a 12s node limit that failed at random (connections take 4 to 14s). First-time Map still untried.
 5. Add real usage: run public team contracts, publish a V3 coverage figure, share in Discord.
 6. README (credit unslop and Stageshow, disclose dependencies), security and repo audit, demo video, pitch deck, DoraHacks submission before 2026-11-06 04:00 UTC.
 - 2026-11-01: EXTCODEHASH simulated read-only on the chain: matches keccak of code; funded wallet returns the empty-code hash, so the registry's code-length check is needed; missing account returns 0. ProofRegistry deployment estimated at about 135 tPOT from a funded sender. Requested about 300 tPOT.
@@ -129,3 +129,4 @@ Reference wallet (owner's, public): `5DcritAN6VxWuzBKX7VoLqy8yotyyCA1AX1cSpH63So
 - 2026-11-02: tPOT arrived. Owner's wallet `5Dcrit...tm8z` holds 500 tPOT (watcher, 10:32 local). Registry deployment and wallet test are unblocked; next step is the owner sending tPOT to the attester, then the steps above.
 - 2026-11-02: demo film v2 built and approved by the owner as the submission film (2026-11-02). `Desktop/demo videos/OneScan_Demo_V2.mp4`: new 120 BPM score, living background, recaptured footage. v1 kept as `OneScan_Demo_Final.mp4`, also `onescan-film/backup/`. Same voice and script; 138.000s, 4140 frames, no decode errors, -15.1 LUFS, peak -2.3 dBFS. Shake cause found: CDP screencast frames arrive out of timestamp order and capture kept arrival order. Fixed by sorting on timestamp and recording scrolls at quarter speed. A live check logged one heading change, so the product does not flip. Large back-and-forth jumps: 10 in v1, 0 in v2 apart from one crossfade at 2:00. Sound not judged by the director; the owner must listen.
 - 2026-11-02: ProofRegistry deployed from the attester (tx `0x657beae8...dd55`, block 291278; about 132.6 tPOT). On-chain simulations against the deployed contract: right hash accepted; wrong hash, zero hash, funded wallet and stranger revert with the right errors. Server env set (`/opt/onescan/onescan.env`, 600), only onescan restarted. Real check through the public API wrote record tx `0xa326887f...f386` for NodeScope; `recordedRuntimeHash` equals the proof's runtime hash; proof page shows "Recorded on-chain". Each record costs about 3.9 tPOT; attester had about 163 tPOT left, so about 41 more. When empty, new records fail visibly while proofs still work. Not backfilled: owner to choose.
+- 2026-11-02: wallet UAT with the owner. Send worked: signing account rose by exactly 5, then 1. Page shows Confirmed and keeps it. Regression check lives at `onescan-film/capture/fund_regress.mjs` with a stand-in wallet.
