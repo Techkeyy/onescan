@@ -2,7 +2,7 @@
 
 Paste a GitHub repo and a Portaldot V3 contract address. OneScan rebuilds the code and tells you whether it is what is really running.
 
-**[Live app](https://onescan-portaldot.vercel.app)** · **[Watch it refuse a false claim](https://onescan-portaldot.vercel.app/check?repo=Gieez/portaldot-revivescope&address=0xd48da7eff3264bdd51a86b873da9ff6997aae99c&run=1)** · **[A real proof](https://onescan-portaldot.vercel.app/proof/0xd48da7eff3264bdd51a86b873da9ff6997aae99c)** · [All proofs](https://onescan-portaldot.vercel.app/proofs) · [API](docs/API.md) · [Architecture](docs/ARCHITECTURE.md) · [Audit](docs/AUDIT.md)
+**[Live app](https://onescan-portaldot.vercel.app)** · **[Demo video](https://youtu.be/JsZpk6Ul9JA)** · **[Watch it refuse a false claim](https://onescan-portaldot.vercel.app/check?repo=Gieez/portaldot-revivescope&address=0xd48da7eff3264bdd51a86b873da9ff6997aae99c&run=1)** · **[A real proof](https://onescan-portaldot.vercel.app/proof/0xd48da7eff3264bdd51a86b873da9ff6997aae99c)** · [All proofs](https://onescan-portaldot.vercel.app/proofs) · [API](docs/API.md) · [Architecture](docs/ARCHITECTURE.md) · [Audit](docs/AUDIT.md)
 
 For builders who want to prove a contract, and for judges, integrators and users who want to check someone else's. No wallet, no account.
 
